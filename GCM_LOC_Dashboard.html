@@ -755,11 +755,27 @@ const fmt = (n, decimals=0) => {
   if (abs >= 1e3) return sign + '$' + Math.round(abs/1e3) + 'K';
   return (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:decimals});
 };
+const fmtC = (n, ccy, decimals=0) => {
+  if (n == null || isNaN(n)) return '—';
+  const sym = ccy === 'GBP' ? '£' : '$';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1e9) return sign + sym + (abs/1e9).toFixed(2) + 'B';
+  if (abs >= 1e6) return sign + sym + (abs/1e6).toFixed(1) + 'M';
+  if (abs >= 1e3) return sign + sym + Math.round(abs/1e3) + 'K';
+  return (n < 0 ? '-' : '') + sym + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:decimals});
+};
 // Precise formatter — keeps full value with 2 decimal places, no K/M abbreviation
 const fmtP = (n) => {
   if (n == null || isNaN(n) || n === 0) return '—';
   const abs = Math.abs(n);
   return (n < 0 ? '-$' : '$') + abs.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+};
+const fmtPC = (n, ccy) => {
+  if (n == null || isNaN(n) || n === 0) return '—';
+  const abs = Math.abs(n);
+  const sym = ccy === 'GBP' ? '£' : '$';
+  return (n < 0 ? '-' : '') + sym + abs.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
 };
 const fmtInt = n => n == null ? '—' : Math.abs(Math.round(n)).toLocaleString();
 const fmtDate = d => { if (!d) return '—'; const [y,m,day] = d.split('-'); return `${m}/${day}/${y.slice(2)}`; };
@@ -889,9 +905,9 @@ function renderFacilities() {
       <td style="font-size:11px;color:var(--text-muted)">${lender}</td>
       <td><span class="tag ${admin==='GCM'?'tag-gcm':'tag-sei'}">${admin}</span></td>
       <td><span class="tag ${ccy==='GBP'?'tag-gbp':'tag-usd'}">${ccy}</span></td>
-      <td class="num" style="color:var(--text-muted)">${commitment ? fmt(commitment) : '—'}</td>
-      <td class="num neg">${drawn ? fmt(drawn) : '—'}</td>
-      <td class="num pos">${commitment ? fmt(avail) : '—'}</td>
+      <td class="num" style="color:var(--text-muted)">${commitment ? fmtC(commitment, ccy) : '—'}</td>
+      <td class="num neg">${drawn ? fmtC(drawn, ccy) : '—'}</td>
+      <td class="num pos">${commitment ? fmtC(avail, ccy) : '—'}</td>
       <td class="num">${commitment ? `<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><span class="avail-bar"><span class="avail-fill" style="width:${Math.min(util,100)}%;background:${utilColor}"></span></span>${util.toFixed(0)}%</div>` : '—'}</td>
       <td class="num">${f.num_draws || '—'}</td>
       <td class="num">${itdTag(f.oldest_itd, maxITD)}</td>
@@ -931,8 +947,8 @@ function renderFacilities() {
                 <td class="dn">${d.rate||'—'}</td>
                 <td class="dn" style="color:var(--text-muted)">${d.spread||'—'}</td>
                 <td class="dn" style="color:var(--text-muted)">${d.benchmark||'—'}</td>
-                <td class="dn neg">${d.daily_accrual ? fmtP(d.daily_accrual) : '—'}</td>
-                <td class="dn neg">${d.next_payment ? fmtP(d.next_payment) : '—'}</td>
+                <td class="dn neg">${d.daily_accrual ? fmtPC(d.daily_accrual, ccy) : '—'}</td>
+                <td class="dn neg">${d.next_payment ? fmtPC(d.next_payment, ccy) : '—'}</td>
                 <td><span class="draw-note" title="${d.notes}">${d.notes||''}</span></td>
               </tr>`;
             }).join('')}
@@ -1005,7 +1021,7 @@ function renderPayments() {
   const uniqueDates = [...new Set(state.payments.map(p=>p.reset_date))].length;
   document.getElementById('paySummaryCards').innerHTML = `
     <div class="pay-sum-card"><div class="psc-label">PEREI interest due</div><div class="psc-val">${fmtP(pereibTotal)}</div><div class="psc-sub">USD across all resets</div></div>
-    ${pereibGBP ? `<div class="pay-sum-card"><div class="psc-label">PEREI interest (GBP)</div><div class="psc-val">${fmtP(pereibGBP)}</div><div class="psc-sub">GBP across all resets</div></div>` : ''}
+    ${pereibGBP ? `<div class="pay-sum-card"><div class="psc-label">PEREI interest (GBP)</div><div class="psc-val">${fmtPC(pereibGBP, 'GBP')}</div><div class="psc-sub">GBP across all resets</div></div>` : ''}
     <div class="pay-sum-card"><div class="psc-label">All facilities</div><div class="psc-val">${fmtP(allTotal)}</div><div class="psc-sub">${state.payments.length} payments · ${uniqueDates} dates</div></div>
     <div class="pay-sum-card" style="border-top:2px solid var(--red)"><div class="psc-label">Resets ≤ 3 days</div><div class="psc-val" style="color:var(--red)">${state.payments.filter(p=>{const d=new Date(p.reset_date)-new Date();return d>=0&&d<=3*864e5}).length}</div><div class="psc-sub">payments urgent</div></div>`;
   document.getElementById('cnt-payments').textContent = state.payments.length;
@@ -1021,7 +1037,7 @@ function renderPayments() {
     const rows = byDate[date];
     const usdTotal = rows.filter(r=>r.ccy==='USD').reduce((s,r)=>s+r.payment_amount,0);
     const gbpTotal = rows.filter(r=>r.ccy==='GBP').reduce((s,r)=>s+r.payment_amount,0);
-    const totStr = [usdTotal?`${fmtP(usdTotal)} USD`:'', gbpTotal?`${fmtP(gbpTotal)} GBP`:''].filter(Boolean).join(' + ');
+    const totStr = [usdTotal?`${fmtP(usdTotal)} USD`:'', gbpTotal?`£${gbpTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} GBP`:''].filter(Boolean).join(' + ');
     const daysOut = Math.round((new Date(date) - new Date()) / 864e5);
     const urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--green)';
     const isOpen = openPayDates.has(date);
@@ -1033,7 +1049,7 @@ function renderPayments() {
         <td style="color:var(--text-pri);font-weight:500">${display}</td>
         <td style="font-size:11px;color:var(--text-muted)">${p.security_code}</td>
         <td class="dn" style="color:var(--text-muted)">${fmt(p.drawn_amount)}</td>
-        <td class="dn" style="color:#d07070;font-weight:500">${fmtP(p.payment_amount)}</td>
+        <td class="dn" style="color:#d07070;font-weight:500">${fmtPC(p.payment_amount, p.ccy)}</td>
         <td><span class="tag ${p.ccy==='GBP'?'tag-gbp':'tag-usd'}">${p.ccy}</span></td>
       </tr>`;
     }).join('');
@@ -1100,7 +1116,7 @@ function renderPayments() {
       </td>
       <td class="num" style="font-size:11px">${r.nextReset || '—'}</td>
       <td class="num" style="font-size:11px;color:var(--text-muted)">${r.count}</td>
-      <td class="num" style="font-size:12px;font-weight:600;color:#d07070">${fmtP(r.total)}</td>
+      <td class="num" style="font-size:12px;font-weight:600;color:#d07070">${fmtPC(r.total, r.ccy)}</td>
       <td><span class="tag ${r.ccy==='GBP'?'tag-gbp':'tag-usd'}">${r.ccy}</span></td>
     </tr>`;
 
@@ -1124,13 +1140,13 @@ function renderPayments() {
                 <td class="dn">${d.reset_date}</td>
                 <td class="dn" style="color:${dColor};font-weight:500">${dOut}d</td>
                 <td class="dn" style="color:var(--text-muted)">${fmt(d.drawn_amount)}</td>
-                <td class="dn" style="color:#d07070;font-weight:500">${fmtP(d.payment_amount)}</td>
+                <td class="dn" style="color:#d07070;font-weight:500">${fmtPC(d.payment_amount, d.ccy)}</td>
                 <td><span class="tag ${d.ccy==='GBP'?'tag-gbp':'tag-usd'}">${d.ccy}</span></td>
               </tr>`;
             }).join('')}
             <tr style="border-top:1px solid var(--border)">
               <td colspan="4" style="font-size:10px;font-weight:600;color:var(--text-muted);padding-top:6px">Subtotal</td>
-              <td class="dn" style="color:#d07070;font-weight:600;padding-top:6px">${fmtP(r.total)}</td>
+              <td class="dn" style="color:#d07070;font-weight:600;padding-top:6px">${fmtPC(r.total, r.ccy)}</td>
               <td></td>
             </tr>
           </tbody>
@@ -1143,7 +1159,7 @@ function renderPayments() {
     '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px">No payments match your filter</td></tr>';
 
   const grandHTML = `<span>PEREI total (USD): <strong>${fmtP(grandTotal)}</strong></span>` +
-    (grandGBP ? `<span style="margin-left:16px">GBP: <strong>${fmtP(grandGBP)}</strong></span>` : '') +
+    (grandGBP ? `<span style="margin-left:16px">GBP: <strong>${fmtPC(grandGBP, 'GBP')}</strong></span>` : '') +
     `<span style="margin-left:auto;color:var(--text-muted)">${facRows.length} facilities</span>`;
   document.getElementById('payFacGrandTotal').innerHTML = grandHTML;
 }
@@ -1219,7 +1235,7 @@ function renderFees() {
           <span class="pay-date-count">${rows.length} fee${rows.length>1?'s':''} · ${daysOut <= 0 ? 'today' : daysOut+'d away'}</span>
         </div>
         <div class="pay-date-right">
-          <span class="pay-date-total" style="color:${feeColor}">${fmtFeeAmt(Math.abs(total)*-1)}</span>
+          <span class="pay-date-total" style="color:${feeColor}">${fmtFeeAmt(total)}</span>
           <i class="ti ti-chevron-right pay-date-chevron"></i>
         </div>
       </div>
@@ -1241,7 +1257,7 @@ function renderFees() {
                 <td><span class="tag" style="background:rgba(255,255,255,0.06);color:var(--text-muted)">${f.fee_type}</span></td>
                 <td class="dn" style="color:var(--text-muted)">${f.rate}</td>
                 <td class="dn" style="color:var(--text-muted)">${f.unused_amount ? fmt(f.unused_amount) : '—'}</td>
-                <td class="dn" style="color:${aColor};font-weight:500">${fmtFeeAmt(Math.abs(amt)*-1)}</td>
+                <td class="dn" style="color:${aColor};font-weight:500">${fmtFeeAmt(amt)}</td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -1266,13 +1282,13 @@ function renderFees() {
       <td><span class="tag" style="background:rgba(255,255,255,0.06);color:var(--text-muted);font-size:9px">${f.fee_type}</span></td>
       <td class="num" style="font-size:11px;color:var(--text-muted)">${f.rate}</td>
       <td class="num" style="font-size:11px;color:var(--text-muted)">${f.unused_amount ? fmt(f.unused_amount) : '—'}</td>
-      <td class="num" style="font-size:12px;font-weight:600;color:${aColor}">${fmtFeeAmt(Math.abs(f.amount)*-1)}</td>
+      <td class="num" style="font-size:12px;font-weight:600;color:${aColor}">${fmtFeeAmt(f.amount)}</td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px">No fees match your filter</td></tr>';
 
   const feeGrandColor = '#d07070';
   document.getElementById('feeGrandTotal').innerHTML =
-    `<span>Total: <strong style="color:${feeGrandColor}">${fmtFeeAmt(Math.abs(grandFeeTotal)*-1)}</strong></span>` +
+    `<span>Total: <strong style="color:${feeGrandColor}">${fmtFeeAmt(grandFeeTotal)}</strong></span>` +
     `<span style="margin-left:auto;color:var(--text-muted)">${fees.length} fee lines</span>`;
 }
 

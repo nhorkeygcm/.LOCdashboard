@@ -26,26 +26,7 @@
   --blue: #378add; --blue-bg: rgba(55,138,221,0.1); --blue-border: rgba(55,138,221,0.25);
   --logo-text: #07111f;
 }
-[data-theme="charcoal"] {
-  --navy: #111111;
-  --navy-mid: #1a1a1a;
-  --navy-card: #1e1e1e;
-  --navy-raised: #252525;
-  --navy-border: #333333;
-  --accent: #0f9e75;
-  --accent-lt: #5dcaa5;
-  --accent-dk: #0a6e52;
-  --text-pri: #e8f5f0;
-  --text-sec: #6aab96;
-  --text-muted: #3a6a5a;
-  --border: rgba(255,255,255,0.06);
-  --border-md: rgba(255,255,255,0.11);
-  --green: #0f9e75; --green-bg: rgba(15,158,117,0.12); --green-border: rgba(15,158,117,0.25);
-  --amber: #ef9f27; --amber-bg: rgba(239,159,39,0.12); --amber-border: rgba(239,159,39,0.25);
-  --red: #e24b4a; --red-bg: rgba(226,75,74,0.1); --red-border: rgba(226,75,74,0.25);
-  --blue: #5dcaa5; --blue-bg: rgba(93,202,165,0.1); --blue-border: rgba(93,202,165,0.25);
-  --logo-text: #111111;
-}
+/* charcoal theme removed */
 [data-theme="warm"] {
   --navy: #f0ede8;
   --navy-mid: #e6e1da;
@@ -342,6 +323,75 @@ tr.pay-fac-active td:first-child::after{
 .theme-option.active .theme-check{opacity:1}
 
 @media(max-width:900px){.section-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ─── ENHANCED READABILITY ──────────────────────────────────────────────── */
+#facilityTbody tr:not(.drill-row):nth-child(4n+3) td { background: rgba(255,255,255,0.015); }
+[data-theme="warm"] #facilityTbody tr:not(.drill-row):nth-child(4n+3) td { background: rgba(0,0,0,0.02); }
+[data-theme="light"] #facilityTbody tr:not(.drill-row):nth-child(4n+3) td { background: rgba(0,0,0,0.015); }
+
+#facilityTbody tr:not(.drill-row):hover td { background: rgba(255,255,255,0.04); transition: background .12s; }
+[data-theme="warm"] #facilityTbody tr:not(.drill-row):hover td { background: rgba(0,0,0,0.04); }
+[data-theme="light"] #facilityTbody tr:not(.drill-row):hover td { background: rgba(0,0,0,0.03); }
+
+#facilityTable thead th { position: sticky; top: 52px; z-index: 10; }
+
+.expand-icon { font-size: 13px; transition: transform .2s ease, color .15s; }
+tr:hover .expand-icon, .cw-summary:hover .expand-icon { color: var(--accent); }
+
+.drill-row td { padding: 0; }
+.drill-content { padding: 4px 16px 16px 36px; animation: drillSlideIn .2s ease-out; border-left: 2px solid var(--accent); margin-left: 22px; }
+@keyframes drillSlideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+.draw-table th { cursor: pointer; user-select: none; transition: color .12s; }
+.draw-table th:hover { color: var(--text-sec); }
+.draw-table th.dt-sorted { color: var(--accent); }
+.draw-table th .dt-sort-icon { font-size: 8px; margin-left: 3px; opacity: 0.4; font-style: normal; }
+.draw-table th.dt-sorted .dt-sort-icon { opacity: 1; color: var(--accent); }
+
+.draw-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+[data-theme="warm"] .draw-table tbody tr:nth-child(even) td,
+[data-theme="light"] .draw-table tbody tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+.draw-table tbody tr:hover td { background: rgba(255,255,255,0.04); }
+[data-theme="warm"] .draw-table tbody tr:hover td,
+[data-theme="light"] .draw-table tbody tr:hover td { background: rgba(0,0,0,0.03); }
+
+.pay-date-body tbody tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+[data-theme="warm"] .pay-date-body tbody tr:nth-child(even) td,
+[data-theme="light"] .pay-date-body tbody tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+
+td { letter-spacing: -0.01em; }
+td.num, td.dn, .cw-num { font-feature-settings: "tnum"; }
+.search-box { padding: 5px 10px; }
+.search-box input { font-size: 12px; }
+td.name-cell { font-size: 12.5px; font-weight: 600; letter-spacing: -0.02em; }
+
+.fac-summary-strip { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.fac-sum-card { background: var(--navy-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; min-width: 140px; flex: 1; position: relative; overflow: hidden; }
+.fac-sum-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.fac-sum-card.c-gold::before { background: var(--accent); }
+.fac-sum-card.c-blue::before { background: var(--blue); }
+.fac-sum-card.c-green::before { background: var(--green); }
+.fac-sum-card.c-red::before { background: var(--red); }
+.fac-sum-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 4px; }
+.fac-sum-val { font-size: 19px; font-weight: 600; letter-spacing: -0.5px; }
+.fac-sum-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+.cw-summary:nth-child(even) { background: rgba(255,255,255,0.01); }
+[data-theme="warm"] .cw-summary:nth-child(even),
+[data-theme="light"] .cw-summary:nth-child(even) { background: rgba(0,0,0,0.01); }
+
+#payTbodyFacility tr.pay-fac-row:nth-child(even) td { background: rgba(255,255,255,0.015); }
+[data-theme="warm"] #payTbodyFacility tr.pay-fac-row:nth-child(even) td,
+[data-theme="light"] #payTbodyFacility tr.pay-fac-row:nth-child(even) td { background: rgba(0,0,0,0.015); }
+
+tr.fac-row-active td:first-child { border-left: 2px solid var(--accent); }
+
+@media(max-width:768px) {
+  .fac-summary-strip { gap: 6px; }
+  .fac-sum-card { min-width: 100px; padding: 10px 12px; }
+  .fac-sum-val { font-size: 16px; }
+}
+
 </style>
 </head>
 <body>
@@ -356,12 +406,6 @@ tr.pay-fac-active td:first-child::after{
   </div>
   <div class="topbar-right">
     <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">Loading…</span></div>
-    <button class="btn" onclick="runRefresh()" id="refreshBtn" title="Pull latest data from your Outlook inbox">
-      <i class="ti ti-refresh" id="refreshIcon"></i> Refresh
-    </button>
-    <button class="btn" onclick="openLoadModal()" title="Manually upload Hazeltree files">
-      <i class="ti ti-folder-up"></i> Load Files
-    </button>
     <button class="btn" onclick="toggleThemePanel()" title="Change dashboard theme">
       <i class="ti ti-color-swatch" style="font-size:14px"></i> Design
     </button>
@@ -375,24 +419,6 @@ tr.pay-fac-active td:first-child::after{
   <div class="theme-panel">
     <div class="theme-panel-title">Dashboard theme</div>
     <div class="theme-options">
-      <div class="theme-option" onclick="setTheme('navy')" data-t="navy">
-        <div class="theme-swatch">
-          <span style="background:#07111f;grid-column:1/-1;grid-row:1"></span>
-          <span style="background:#c9a227"></span>
-          <span style="background:#111f38"></span>
-        </div>
-        <div class="theme-info"><div class="theme-name">Navy / Gold</div><div class="theme-desc">Original dark theme</div></div>
-        <i class="ti ti-check theme-check"></i>
-      </div>
-      <div class="theme-option" onclick="setTheme('charcoal')" data-t="charcoal">
-        <div class="theme-swatch">
-          <span style="background:#111111;grid-column:1/-1;grid-row:1"></span>
-          <span style="background:#0f9e75"></span>
-          <span style="background:#1e1e1e"></span>
-        </div>
-        <div class="theme-info"><div class="theme-name">Charcoal / Teal</div><div class="theme-desc">Pure dark, teal accent</div></div>
-        <i class="ti ti-check theme-check"></i>
-      </div>
       <div class="theme-option" onclick="setTheme('warm')" data-t="warm">
         <div class="theme-swatch">
           <span style="background:#f0ede8;grid-column:1/-1;grid-row:1"></span>
@@ -416,94 +442,6 @@ tr.pay-fac-active td:first-child::after{
   </div>
 </div>
 
-<!-- REFRESH MODAL — reads from SharePoint -->
-<div class="modal-bg" id="refreshModal">
-  <div class="modal">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <div style="width:32px;height:32px;border-radius:8px;background:var(--green-bg);border:1px solid var(--green-border);display:flex;align-items:center;justify-content:center">
-        <i class="ti ti-refresh" style="color:var(--green);font-size:16px"></i>
-      </div>
-      <h3 style="margin:0">Refresh Data</h3>
-    </div>
-    <p>Reads the three latest Hazeltree files written to SharePoint by the Power Automate flows. Works for anyone with access to the Treasury Team SharePoint site — no Claude or M365 connector needed.</p>
-    <div id="refreshStatus" style="display:none;margin-bottom:14px"></div>
-    <div style="background:var(--navy-raised);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:var(--text-muted)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--text-sec);font-weight:500">
-        <i class="ti ti-brand-sharepoint" style="font-size:13px"></i> Reading from SharePoint:
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;padding-left:20px">
-        <span><span id="r-loan" class="refresh-check">○</span> <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">loan_board.csv</code></span>
-        <span><span id="r-pay" class="refresh-check">○</span> <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">upcoming_payments.txt</code></span>
-        <span><span id="r-fee" class="refresh-check">○</span> <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">upcoming_fees.txt</code></span>
-      </div>
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);color:var(--text-muted)">
-        <i class="ti ti-info-circle" style="margin-right:4px"></i>If files aren't updating, check that the Power Automate flows are turned on.
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeRefreshModal()">Cancel</button>
-      <button class="btn primary" id="runRefreshBtn" onclick="executeRefresh()">
-        <i class="ti ti-refresh"></i> Pull latest data
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- LOAD FILES MODAL — manual fallback -->
-<div class="modal-bg" id="loadModal">
-  <div class="modal">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <div style="width:32px;height:32px;border-radius:8px;background:var(--amber-bg);border:1px solid var(--amber-border);display:flex;align-items:center;justify-content:center">
-        <i class="ti ti-folder-up" style="color:var(--amber);font-size:16px"></i>
-      </div>
-      <h3 style="margin:0">Load Files Manually</h3>
-    </div>
-    <p>Use this when the automatic refresh isn't available. You'll need to locate three files from the daily Hazeltree emails and upload them here.</p>
-
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-
-      <div style="background:var(--navy-raised);border-radius:8px;padding:12px 14px;border-left:3px solid var(--accent)">
-        <div style="font-size:11px;font-weight:600;color:var(--text-pri);margin-bottom:4px">
-          <i class="ti ti-paperclip" style="font-size:12px;margin-right:4px"></i>1 — Loan Board LD <span style="font-weight:400;color:var(--text-muted)">(CSV attachment)</span>
-        </div>
-        <div style="font-size:11px;color:var(--text-sec);line-height:1.6">
-          Open the <strong>Loan Board LD</strong> email from <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">GRV_PRD@hazeltree.com</code> in your inbox. The email contains a CSV file attachment named something like <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">Loan Board LD_YYYY-MM-DD.csv</code>. Download that attachment and upload it here.
-        </div>
-      </div>
-
-      <div style="background:var(--navy-raised);border-radius:8px;padding:12px 14px;border-left:3px solid var(--blue)">
-        <div style="font-size:11px;font-weight:600;color:var(--text-pri);margin-bottom:4px">
-          <i class="ti ti-mail" style="font-size:12px;margin-right:4px"></i>2 — Upcoming Payments <span style="font-weight:400;color:var(--text-muted)">(email body)</span>
-        </div>
-        <div style="font-size:11px;color:var(--text-sec);line-height:1.6">
-          Find the <strong>Upcoming Payments</strong> email from Hazeltree. Forward it to yourself, then save it as a <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">.msg</code> or <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">.eml</code> file and upload it here. The payment data is in the email body — no attachment needed.
-        </div>
-      </div>
-
-      <div style="background:var(--navy-raised);border-radius:8px;padding:12px 14px;border-left:3px solid var(--green)">
-        <div style="font-size:11px;font-weight:600;color:var(--text-pri);margin-bottom:4px">
-          <i class="ti ti-mail" style="font-size:12px;margin-right:4px"></i>3 — Upcoming Fees <span style="font-weight:400;color:var(--text-muted)">(email body)</span>
-        </div>
-        <div style="font-size:11px;color:var(--text-sec);line-height:1.6">
-          Same process as Upcoming Payments — find the <strong>Upcoming Fees</strong> email from Hazeltree, forward to yourself, save as <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">.msg</code> or <code style="font-size:10px;background:var(--navy);padding:1px 5px;border-radius:3px">.eml</code>, and upload here.
-        </div>
-      </div>
-
-    </div>
-
-    <div class="file-input-area" onclick="document.getElementById('fileInput').click()">
-      <i class="ti ti-file-upload" style="font-size:20px;display:block;margin-bottom:6px"></i>
-      Drop all three files here, or click to select<br>
-      <small style="opacity:.6">Accepts .csv, .msg, .eml files · Upload all at once or one at a time</small>
-      <input type="file" id="fileInput" multiple accept=".csv,.msg,.eml" onchange="handleFileUpload(this.files)">
-    </div>
-    <div id="fileStatus" class="file-status" style="display:none"></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeLoadModal()">Cancel</button>
-      <button class="btn primary" onclick="closeLoadModal()">Done</button>
-    </div>
-  </div>
-</div>
 
 <div class="main">
   <!-- METRICS -->
@@ -528,6 +466,7 @@ tr.pay-fac-active td:first-child::after{
 
   <!-- FACILITIES TAB -->
   <div class="tab-content active" id="content-facilities">
+    <div class="fac-summary-strip" id="facSummaryStrip"></div>
     <div class="controls">
       <span class="filter-label">Lender:</span>
       <select id="filterLender" onchange="renderFacilities()">
@@ -933,6 +872,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   document.getElementById('content-' + tab).classList.add('active');
+  try { localStorage.setItem('gcm-dash-tab', tab); } catch(e) {}
 }
 
 // ─── FACILITIES ──────────────────────────────────────────────────────────────
@@ -1051,21 +991,21 @@ function renderFacilities() {
           ${adsInfoBar(meta)}
           <table class="draw-table">
             <thead><tr>
-              <th>Security Code</th>
-              <th style="text-align:right">Drawn</th>
-              <th style="text-align:right">Open Date</th>
-              <th style="text-align:right">Next Reset</th>
-              <th style="text-align:right">Maturity</th>
-              <th style="text-align:right">ITD Days</th>
-              <th style="text-align:right">Extensions</th>
-              <th style="text-align:right">Rate</th>
+              <th onclick="sortDraws('${f.account}','dt-code')" class="${drawSortIcon(f.account,'dt-code')}">Security Code</th>
+              <th onclick="sortDraws('${f.account}','dt-drawn')" style="text-align:right" class="${drawSortIcon(f.account,'dt-drawn')}">Drawn</th>
+              <th onclick="sortDraws('${f.account}','dt-open')" style="text-align:right" class="${drawSortIcon(f.account,'dt-open')}">Open Date</th>
+              <th onclick="sortDraws('${f.account}','dt-reset')" style="text-align:right" class="${drawSortIcon(f.account,'dt-reset')}">Next Reset</th>
+              <th onclick="sortDraws('${f.account}','dt-mat')" style="text-align:right" class="${drawSortIcon(f.account,'dt-mat')}">Maturity</th>
+              <th onclick="sortDraws('${f.account}','dt-itd')" style="text-align:right" class="${drawSortIcon(f.account,'dt-itd')}">ITD Days</th>
+              <th onclick="sortDraws('${f.account}','dt-ext')" style="text-align:right" class="${drawSortIcon(f.account,'dt-ext')}">Extensions</th>
+              <th onclick="sortDraws('${f.account}','dt-rate')" style="text-align:right" class="${drawSortIcon(f.account,'dt-rate')}">Rate</th>
               <th style="text-align:right">Spread</th>
               <th style="text-align:right">Benchmark</th>
-              <th style="text-align:right">Daily Accrual</th>
-              <th style="text-align:right">Int. Due</th>
-              <th>Notes <span style="font-weight:400;opacity:.5;text-transform:none;font-size:8px">(hover to expand)</span></th>
+              <th onclick="sortDraws('${f.account}','dt-accrual')" style="text-align:right" class="${drawSortIcon(f.account,'dt-accrual')}">Accrual</th>
+              <th onclick="sortDraws('${f.account}','dt-intdue')" style="text-align:right" class="${drawSortIcon(f.account,'dt-intdue')}">Int. Due</th>
+              <th>Notes <span style="font-weight:400;opacity:.5;text-transform:none;font-size:8px">(hover)</span></th>
             </tr></thead>
-            <tbody>${f.draws.map(d => {
+            <tbody>${getSortedDraws(f.draws, f.account).map(d => {
               const daysM = d.days_to_maturity != null ? Math.round(d.days_to_maturity) : null;
               const matColor = daysM != null && daysM <= 7 ? 'var(--red)' : daysM != null && daysM <= 30 ? 'var(--amber)' : 'var(--text-sec)';
               return `<tr>
@@ -1103,6 +1043,17 @@ function renderFacilities() {
   document.getElementById('footerLeft').innerHTML = `<strong>${active.length}</strong> with draws · <strong>${inactive.length}</strong> no draw · <strong>${placeholders.length}</strong> in process`;
   document.getElementById('footerRight').innerHTML = `Total drawn: <strong>${fmt(totalDrawn)}</strong> · Total capacity: <strong>${fmt(totalCommit)}</strong>`;
   document.getElementById('facilityCount2').textContent = `${facs.length} facilities`;
+
+  // Facility summary strip
+  const totalAvail = totalCommit + totalDrawn;
+  const avgUtil = totalCommit ? Math.abs(totalDrawn)/totalCommit*100 : 0;
+  const activeDraws = active.reduce((s,f) => s + (f.num_draws||0), 0);
+  const strip = document.getElementById('facSummaryStrip');
+  if (strip) strip.innerHTML = `
+    <div class="fac-sum-card c-gold"><div class="fac-sum-label">Total Drawn</div><div class="fac-sum-val">${fmt(totalDrawn)}</div><div class="fac-sum-sub">${active.length} active facilities</div></div>
+    <div class="fac-sum-card c-blue"><div class="fac-sum-label">Available Capacity</div><div class="fac-sum-val">${fmt(totalAvail)}</div><div class="fac-sum-sub">of ${fmt(totalCommit)} committed</div></div>
+    <div class="fac-sum-card c-green"><div class="fac-sum-label">Avg Utilization</div><div class="fac-sum-val">${avgUtil.toFixed(1)}%</div><div class="fac-sum-sub">across all PEREI</div></div>
+    <div class="fac-sum-card c-red"><div class="fac-sum-label">Active Draws</div><div class="fac-sum-val">${activeDraws}</div><div class="fac-sum-sub">${facs.length} total facilities</div></div>`;
 }
 
 function toggleDrill(acct) {
@@ -1664,10 +1615,7 @@ function loadSnapshot() {
 }
 
 // ─── MODAL CONTROLS ──────────────────────────────────────────────────────────
-function runRefresh() {
-  document.getElementById('refreshModal').classList.add('open');
-  resetRefreshModal();
-}
+function runRefresh() {}
 
 function resetRefreshModal() {
   ['r-loan','r-pay','r-fee'].forEach(id => {
@@ -1682,12 +1630,9 @@ function resetRefreshModal() {
   btn.innerHTML = '<i class="ti ti-refresh"></i> Pull latest data';
 }
 
-function closeRefreshModal() {
-  document.getElementById('refreshModal').classList.remove('open');
-  resetRefreshModal();
-}
-function openLoadModal() { document.getElementById('loadModal').classList.add('open'); }
-function closeLoadModal() { document.getElementById('loadModal').classList.remove('open'); }
+function closeRefreshModal() {}
+function openLoadModal() {}
+function closeLoadModal() {}
 
 document.getElementById('refreshModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeRefreshModal(); });
 document.getElementById('loadModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeLoadModal(); });
@@ -2006,10 +1951,10 @@ function handleFileUpload(files) {
 
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
-const THEMES = ['navy','charcoal','warm','light'];
+const THEMES = ['warm','light'];
 
 function setTheme(t) {
-  if (!THEMES.includes(t)) t = 'navy';
+  if (!THEMES.includes(t)) t = 'light';
   document.documentElement.setAttribute('data-theme', t === 'navy' ? '' : t);
   localStorage.setItem('gcm-dash-theme', t);
   document.querySelectorAll('.theme-option').forEach(el => {
@@ -2029,8 +1974,6 @@ document.getElementById('themePanel').addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.getElementById('themePanel').classList.remove('open');
-    closeRefreshModal();
-    closeLoadModal();
   }
 });
 
@@ -2041,6 +1984,16 @@ document.addEventListener('keydown', e => {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadSnapshot();
+
+// Restore saved tab on page load
+(function restoreTab() {
+  try {
+    const saved = localStorage.getItem('gcm-dash-tab');
+    if (saved && document.getElementById('tab-' + saved)) {
+      switchTab(saved);
+    }
+  } catch(e) {}
+})();
 
 // ─── NOTE TOOLTIP ─────────────────────────────────────────────────────────────
 (function() {
@@ -2074,6 +2027,49 @@ loadSnapshot();
     tip.style.top  = y + 'px';
   }
 })();
+
+
+// ─── SORTABLE DRAW TABLES ────────────────────────────────────────────────
+let drawSortState = {};
+
+function sortDraws(acct, col) {
+  if (!drawSortState[acct]) drawSortState[acct] = { col: null, dir: 1 };
+  const st = drawSortState[acct];
+  if (st.col === col) st.dir *= -1;
+  else { st.col = col; st.dir = -1; }
+  renderFacilities();
+}
+
+function getSortedDraws(draws, acct) {
+  const st = drawSortState[acct];
+  if (!st || !st.col) return draws;
+  const sorted = [...draws];
+  sorted.sort((a, b) => {
+    let av, bv;
+    switch(st.col) {
+      case 'dt-code':    av = a.security_code||''; bv = b.security_code||''; return st.dir * av.localeCompare(bv);
+      case 'dt-drawn':   av = Math.abs(a.drawn||0); bv = Math.abs(b.drawn||0); return st.dir * (av - bv);
+      case 'dt-open':    av = a.open_date||''; bv = b.open_date||''; return st.dir * av.localeCompare(bv);
+      case 'dt-reset':   av = a.next_reset||'9999'; bv = b.next_reset||'9999'; return st.dir * av.localeCompare(bv);
+      case 'dt-mat':     av = a.days_to_maturity!=null?a.days_to_maturity:9999; bv = b.days_to_maturity!=null?b.days_to_maturity:9999; return st.dir * (av - bv);
+      case 'dt-itd':     av = a.itd||0; bv = b.itd||0; return st.dir * (av - bv);
+      case 'dt-ext':     av = a.extensions||0; bv = b.extensions||0; return st.dir * (av - bv);
+      case 'dt-rate':    av = parseFloat((a.rate||'0').replace('%',''))||0; bv = parseFloat((b.rate||'0').replace('%',''))||0; return st.dir * (av - bv);
+      case 'dt-accrual': av = Math.abs(a.daily_accrual||0); bv = Math.abs(b.daily_accrual||0); return st.dir * (av - bv);
+      case 'dt-intdue':  av = Math.abs(a.next_payment||0); bv = Math.abs(b.next_payment||0); return st.dir * (av - bv);
+      default: return 0;
+    }
+  });
+  return sorted;
+}
+
+function drawSortIcon(acct, col) {
+  const st = drawSortState[acct];
+  const isSorted = st && st.col === col;
+  const cls = isSorted ? 'dt-sorted' : '';
+  const arrow = isSorted ? (st.dir === -1 ? '▼' : '▲') : '⇅';
+  return `${cls}"><span class="dt-sort-icon">${arrow}</span>`;
+}
 
 </script>
 </body>

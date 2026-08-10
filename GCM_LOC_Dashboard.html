@@ -326,13 +326,13 @@ tr.pay-fac-active td:first-child::after{
 
 
 /* ─── ENHANCED READABILITY ──────────────────────────────────────────────── */
-#facilityTbody tr:not(.drill-row):nth-child(4n+3) td{background:rgba(255,255,255,0.015)}
-[data-theme="warm"] #facilityTbody tr:not(.drill-row):nth-child(4n+3) td{background:rgba(0,0,0,0.02)}
-[data-theme="light"] #facilityTbody tr:not(.drill-row):nth-child(4n+3) td{background:rgba(0,0,0,0.015)}
+/* alternating rows removed — clean white base */
+
+
 #facilityTbody tr:not(.drill-row):hover td{background:rgba(255,255,255,0.04)!important;transition:background .12s}
 [data-theme="warm"] #facilityTbody tr:not(.drill-row):hover td{background:rgba(0,0,0,0.04)!important}
 [data-theme="light"] #facilityTbody tr:not(.drill-row):hover td{background:rgba(0,0,0,0.03)!important}
-#facilityTable thead th{position:sticky;top:52px;z-index:10}
+/* facility table header - no sticky to avoid alignment issues */
 .expand-icon{font-size:13px;transition:transform .2s ease, color .15s}
 tr:hover .expand-icon,.cw-summary:hover .expand-icon{color:var(--accent)}
 .drill-content{animation:drillSlideIn .2s ease-out;border-left:2px solid var(--accent);margin-left:22px}
@@ -348,6 +348,9 @@ td.num,td.dn,.cw-num{font-feature-settings:"tnum"}
 .search-box{padding:5px 10px}
 .search-box input{font-size:12px}
 td.name-cell{font-size:12.5px;font-weight:600;letter-spacing:-0.02em}
+.drill-hint{font-size:11px;color:var(--text-muted);margin-right:5px;opacity:0.6;transition:opacity .15s,color .15s}
+tr:hover .drill-hint{opacity:1;color:var(--accent)}
+tr.expanded .drill-hint{opacity:1;color:var(--accent)}
 .fac-summary-strip{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .fac-sum-card{background:var(--navy-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:140px;flex:1;position:relative;overflow:hidden}
 .fac-sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
@@ -367,6 +370,14 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
 .draw-table th:hover{color:var(--text-sec)}
 .draw-table th.dt-sorted{color:var(--accent)}
 @media(max-width:768px){.fac-summary-strip{gap:6px}.fac-sum-card{min-width:100px;padding:10px 12px}.fac-sum-val{font-size:16px}}
+
+/* Payment table column alignment across date groups */
+.pay-date-body table{table-layout:fixed;width:100%}
+.pay-date-body th:nth-child(1),.pay-date-body td:nth-child(1){width:28%}
+.pay-date-body th:nth-child(2),.pay-date-body td:nth-child(2){width:30%}
+.pay-date-body th:nth-child(3),.pay-date-body td:nth-child(3){width:16%;text-align:right}
+.pay-date-body th:nth-child(4),.pay-date-body td:nth-child(4){width:16%;text-align:right}
+.pay-date-body th:nth-child(5),.pay-date-body td:nth-child(5){width:10%}
 </style>
 </head>
 <body>
@@ -419,14 +430,8 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
 
 
 <div class="main">
-  <!-- METRICS -->
-  <div class="metrics" id="metricsRow">
-    <div class="metric gold"><div class="m-label"><i class="ti ti-credit-card"></i>Total Drawn</div><div class="m-val" id="mTotalDrawn">—</div><div class="m-sub" id="mFacilityCount">— PEREI facilities</div></div>
-    <div class="metric blue"><div class="m-label"><i class="ti ti-building-bank"></i>Total Capacity</div><div class="m-val" id="mCapacity">—</div><div class="m-sub" id="mAvailability">— available</div></div>
-    <div class="metric green"><div class="m-label"><i class="ti ti-chart-bar"></i>Utilization</div><div class="m-val" id="mUtil">—</div><div class="m-bar"><div class="m-bar-fill" id="mUtilBar" style="background:var(--green)"></div></div></div>
-    <div class="metric red"><div class="m-label"><i class="ti ti-calendar-due"></i>Resets ≤ 7 Days</div><div class="m-val" id="mResets">—</div><div class="m-sub" id="mResetAmt">— in interest due</div></div>
-    <div class="metric amber"><div class="m-label"><i class="ti ti-clock"></i>Oldest Draw (ITD)</div><div class="m-val" id="mOldestITD">—</div><div class="m-sub" id="mOldestFacility">—</div></div>
-  </div>
+  <!-- SUMMARY STRIP — above tabs, always visible -->
+  <div class="fac-summary-strip" id="facSummaryStrip"></div>
 
   <!-- TABS -->
   <div class="tab-row">
@@ -441,7 +446,6 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
 
   <!-- FACILITIES TAB -->
   <div class="tab-content active" id="content-facilities">
-    <div class="fac-summary-strip" id="facSummaryStrip"></div>
     <div class="controls">
       <span class="filter-label">Lender:</span>
       <select id="filterLender" onchange="renderFacilities()">
@@ -947,7 +951,7 @@ function renderFacilities() {
     const opacity = (drawn === 0 || f.isPlaceholder) ? 'opacity:.7' : '';
     rows.push(`<tr class="${isExpanded?'expanded fac-row-active':''}" onclick="toggleDrill('${f.account}')" data-acct="${f.account}" style="${opacity}">
       <td style="padding:10px 6px 10px 12px;position:relative"><span class="expand-icon ti ti-chevron-right"></span></td>
-      <td class="name-cell">${name}${f.isPlaceholder ? ' <span style="font-size:9px;color:var(--text-muted);font-weight:400">(placeholder)</span>' : ''}</td>
+      <td class="name-cell"><span class="drill-hint">${isExpanded?'▴':'▾'}</span>${name}${f.isPlaceholder ? ' <span style="font-size:9px;color:var(--text-muted);font-weight:400">(placeholder)</span>' : ''}</td>
       <td style="font-size:11px;color:var(--text-muted)">${lender}</td>
       <td><span class="tag ${admin==='GCM'?'tag-gcm':'tag-sei'}">${admin}</span></td>
       <td><span class="tag ${ccy==='GBP'?'tag-gbp':'tag-usd'}">${ccy}</span></td>
@@ -1029,6 +1033,9 @@ function renderFacilities() {
     '<div class="fac-sum-card c-blue"><div class="fac-sum-label">Available Capacity</div><div class="fac-sum-val">'+fmt(totalAvail)+'</div><div class="fac-sum-sub">of '+fmt(totalCommit)+' committed</div></div>'+
     '<div class="fac-sum-card c-green"><div class="fac-sum-label">Avg Utilization</div><div class="fac-sum-val">'+avgUtil.toFixed(1)+'%</div><div class="fac-sum-sub">across all PEREI</div></div>'+
     '<div class="fac-sum-card c-red"><div class="fac-sum-label">Active Draws</div><div class="fac-sum-val">'+activeDraws+'</div><div class="fac-sum-sub">'+facs.length+' total facilities</div></div>';
+
+  // Update tab badge (was in updateMetrics)
+  document.getElementById('cnt-facilities').textContent = facs.length;
 
   // Make draw-table headers sortable via DOM (safe post-render)
   document.querySelectorAll('.draw-table').forEach(function(tbl) {
@@ -1120,7 +1127,7 @@ function renderPayments() {
   payments.forEach(p => { (byDate[p.reset_date] = byDate[p.reset_date]||[]).push(p); });
 
   const dateKeys = Object.keys(byDate).sort((a, b) => new Date(a) - new Date(b));
-  if (dateKeys.length && !openPayDates.size) dateKeys.slice(0,2).forEach(k => openPayDates.add(k));
+  if (dateKeys.length && !openPayDates.size) dateKeys.forEach(k => openPayDates.add(k));
 
   const dateGroupsHTML = dateKeys.map(date => {
     const rows = byDate[date];
@@ -1296,7 +1303,6 @@ function renderFees() {
   const unusedTotal = state.fees.filter(f=>f.fee_type==='Unused Fee').reduce((s,f)=>s+f.amount,0);
   const commitTotal = state.fees.filter(f=>f.fee_type==='Commitment Fee').reduce((s,f)=>s+f.amount,0);
   document.getElementById('feeSummaryCards').innerHTML = `
-    <div class="pay-sum-card"><div class="psc-label">PEREI fees due</div><div class="psc-val" style="color:#d07070">${fmtFeeAmt(Math.abs(pereiFeeTotal)*-1)}</div><div class="psc-sub">${state.fees.filter(f=>PEREI_FEE_AGREEMENTS.has(f.agreement)).length} line items</div></div>
     <div class="pay-sum-card"><div class="psc-label">All facilities</div><div class="psc-val" style="color:#d07070">${fmtFeeAmt(Math.abs(allFeeTotal)*-1)}</div><div class="psc-sub">${state.fees.length} total fee lines</div></div>
     <div class="pay-sum-card"><div class="psc-label">Unused fees</div><div class="psc-val" style="font-size:15px;color:#d07070">${fmtFeeAmt(Math.abs(unusedTotal)*-1)}</div><div class="psc-sub">Across all facilities</div></div>
     <div class="pay-sum-card"><div class="psc-label">Commitment fees</div><div class="psc-val" style="font-size:15px;color:#d07070">${fmtFeeAmt(Math.abs(commitTotal)*-1)}</div><div class="psc-sub">Across all facilities</div></div>`;
@@ -1547,39 +1553,7 @@ function renderCleanupWatch() {
 
 // ─── METRICS ──────────────────────────────────────────────────────────────────
 function updateMetrics() {
-  const facs = state.facilities;
-  const totalDrawn = facs.reduce((s,f) => s + f.total_drawn, 0);
-  const totalCommit = facs.reduce((s,f) => s + (LOC_META[f.account]?.commitment || 0), 0);
-  const avail = totalCommit + totalDrawn;
-  const util = totalCommit ? Math.abs(totalDrawn)/totalCommit*100 : 0;
-
-  // Resets in next 7 days
-  const today = new Date();
-  const in7 = new Date(); in7.setDate(in7.getDate()+7);
-  const soonPayments = state.payments.filter(p => {
-    const d = new Date(p.reset_date);
-    return d >= today && d <= in7;
-  });
-  const soonAmt = soonPayments.reduce((s,p) => s + p.payment_amount, 0);
-
-  // Oldest draw
-  let oldest = 0, oldestFac = '';
-  facs.forEach(f => {
-    if (f.oldest_itd > oldest) { oldest = f.oldest_itd; oldestFac = LOC_META[f.account]?.display || f.portfolio; }
-  });
-
-  document.getElementById('mTotalDrawn').textContent = fmt(totalDrawn);
-  document.getElementById('mFacilityCount').textContent = facs.filter(f=>f.total_drawn!==0).length + ' active, ' + facs.length + ' total';
-  document.getElementById('mCapacity').textContent = fmt(totalCommit);
-  document.getElementById('mAvailability').textContent = fmt(avail) + ' available';
-  document.getElementById('mUtil').textContent = util.toFixed(1) + '%';
-  document.getElementById('mUtilBar').style.width = Math.min(util,100) + '%';
-  document.getElementById('mUtilBar').style.background = util>85?'var(--red)':util>65?'var(--amber)':'var(--green)';
-  document.getElementById('mResets').textContent = soonPayments.length;
-  document.getElementById('mResetAmt').textContent = '$' + soonAmt.toLocaleString('en-US',{maximumFractionDigits:0}) + ' due';
-  document.getElementById('mOldestITD').textContent = oldest + 'd';
-  document.getElementById('mOldestFacility').textContent = oldestFac;
-  document.getElementById('cnt-facilities').textContent = facs.length;
+  // Metrics row removed — summary strip in Facilities tab replaces it
 }
 
 // ─── LENDER FILTER ────────────────────────────────────────────────────────────
@@ -1986,6 +1960,14 @@ document.addEventListener('keydown', e => {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadSnapshot();
+
+// Restore saved tab on page load
+(function() {
+  try {
+    var t = localStorage.getItem('gcm-dash-tab');
+    if (t && document.getElementById('tab-' + t)) switchTab(t);
+  } catch(e) {}
+})();
 
 // ─── NOTE TOOLTIP ─────────────────────────────────────────────────────────────
 (function() {

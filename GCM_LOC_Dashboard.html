@@ -1983,6 +1983,49 @@ document.addEventListener('keydown', e => {
 })();
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
+// ─── SORTABLE DRAW TABLES ────────────────────────────────────────────────
+let drawSortState = {};
+
+function sortDraws(acct, col) {
+  if (!drawSortState[acct]) drawSortState[acct] = { col: null, dir: 1 };
+  const st = drawSortState[acct];
+  if (st.col === col) st.dir *= -1;
+  else { st.col = col; st.dir = -1; }
+  renderFacilities();
+}
+
+function getSortedDraws(draws, acct) {
+  const st = drawSortState[acct];
+  if (!st || !st.col) return draws;
+  const sorted = [...draws];
+  sorted.sort((a, b) => {
+    let av, bv;
+    switch(st.col) {
+      case 'dt-code':    av = a.security_code||''; bv = b.security_code||''; return st.dir * av.localeCompare(bv);
+      case 'dt-drawn':   av = Math.abs(a.drawn||0); bv = Math.abs(b.drawn||0); return st.dir * (av - bv);
+      case 'dt-open':    av = a.open_date||''; bv = b.open_date||''; return st.dir * av.localeCompare(bv);
+      case 'dt-reset':   av = a.next_reset||'9999'; bv = b.next_reset||'9999'; return st.dir * av.localeCompare(bv);
+      case 'dt-mat':     av = a.days_to_maturity!=null?a.days_to_maturity:9999; bv = b.days_to_maturity!=null?b.days_to_maturity:9999; return st.dir * (av - bv);
+      case 'dt-itd':     av = a.itd||0; bv = b.itd||0; return st.dir * (av - bv);
+      case 'dt-ext':     av = a.extensions||0; bv = b.extensions||0; return st.dir * (av - bv);
+      case 'dt-rate':    av = parseFloat((a.rate||'0').replace('%',''))||0; bv = parseFloat((b.rate||'0').replace('%',''))||0; return st.dir * (av - bv);
+      case 'dt-accrual': av = Math.abs(a.daily_accrual||0); bv = Math.abs(b.daily_accrual||0); return st.dir * (av - bv);
+      case 'dt-intdue':  av = Math.abs(a.next_payment||0); bv = Math.abs(b.next_payment||0); return st.dir * (av - bv);
+      default: return 0;
+    }
+  });
+  return sorted;
+}
+
+function drawSortIcon(acct, col) {
+  const st = drawSortState[acct];
+  const isSorted = st && st.col === col;
+  const cls = isSorted ? 'dt-sorted' : '';
+  const arrow = isSorted ? (st.dir === -1 ? '▼' : '▲') : '⇅';
+  return `${cls}"><span class="dt-sort-icon">${arrow}</span>`;
+}
+
+
 loadSnapshot();
 
 // Restore saved tab on page load
@@ -2028,48 +2071,6 @@ loadSnapshot();
   }
 })();
 
-
-// ─── SORTABLE DRAW TABLES ────────────────────────────────────────────────
-let drawSortState = {};
-
-function sortDraws(acct, col) {
-  if (!drawSortState[acct]) drawSortState[acct] = { col: null, dir: 1 };
-  const st = drawSortState[acct];
-  if (st.col === col) st.dir *= -1;
-  else { st.col = col; st.dir = -1; }
-  renderFacilities();
-}
-
-function getSortedDraws(draws, acct) {
-  const st = drawSortState[acct];
-  if (!st || !st.col) return draws;
-  const sorted = [...draws];
-  sorted.sort((a, b) => {
-    let av, bv;
-    switch(st.col) {
-      case 'dt-code':    av = a.security_code||''; bv = b.security_code||''; return st.dir * av.localeCompare(bv);
-      case 'dt-drawn':   av = Math.abs(a.drawn||0); bv = Math.abs(b.drawn||0); return st.dir * (av - bv);
-      case 'dt-open':    av = a.open_date||''; bv = b.open_date||''; return st.dir * av.localeCompare(bv);
-      case 'dt-reset':   av = a.next_reset||'9999'; bv = b.next_reset||'9999'; return st.dir * av.localeCompare(bv);
-      case 'dt-mat':     av = a.days_to_maturity!=null?a.days_to_maturity:9999; bv = b.days_to_maturity!=null?b.days_to_maturity:9999; return st.dir * (av - bv);
-      case 'dt-itd':     av = a.itd||0; bv = b.itd||0; return st.dir * (av - bv);
-      case 'dt-ext':     av = a.extensions||0; bv = b.extensions||0; return st.dir * (av - bv);
-      case 'dt-rate':    av = parseFloat((a.rate||'0').replace('%',''))||0; bv = parseFloat((b.rate||'0').replace('%',''))||0; return st.dir * (av - bv);
-      case 'dt-accrual': av = Math.abs(a.daily_accrual||0); bv = Math.abs(b.daily_accrual||0); return st.dir * (av - bv);
-      case 'dt-intdue':  av = Math.abs(a.next_payment||0); bv = Math.abs(b.next_payment||0); return st.dir * (av - bv);
-      default: return 0;
-    }
-  });
-  return sorted;
-}
-
-function drawSortIcon(acct, col) {
-  const st = drawSortState[acct];
-  const isSorted = st && st.col === col;
-  const cls = isSorted ? 'dt-sorted' : '';
-  const arrow = isSorted ? (st.dir === -1 ? '▼' : '▲') : '⇅';
-  return `${cls}"><span class="dt-sort-icon">${arrow}</span>`;
-}
 
 </script>
 </body>

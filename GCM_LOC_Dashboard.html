@@ -1178,7 +1178,7 @@ function renderPayments() {
         const facPayments = state.payments.filter(p => p.agreement === agr);
         const totalDrawn = facPayments.reduce((s,p) => s + Math.abs(p.drawn_amount || 0), 0);
         const nextReset = facPayments.map(p=>p.reset_date).sort()[0];
-        const cashOnDate = nextReset ? getCashOnDate(accts[0], nextReset.replace(/\\//g,'-')) : null;
+        const cashOnDate = nextReset ? getCashOnDate(accts[0], nextReset.replace(/\//g,'-')) : null;
         const bal = cashOnDate ? cashOnDate.balance : cash.opening_balance;
         if (bal >= totalDrawn && totalDrawn > 0) paydownReady++;
       });

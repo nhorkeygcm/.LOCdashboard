@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GCM Grosvenor — PEREI Credit Facilities</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.2.0/tabler-icons.min.css">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   --navy: #07111f;
@@ -208,6 +209,10 @@ td.warn{color:var(--amber)}
 [data-theme="warm"] .cw-detail,[data-theme="light"] .cw-detail{background:rgba(0,0,0,0.03)}
 [data-theme="warm"] .cw-detail-head,[data-theme="light"] .cw-detail-head{background:rgba(0,0,0,0.04)}
 .draw-note{font-size:10px;white-space:normal;word-break:break-word;color:var(--accent);font-weight:500;line-height:1.5}
+@keyframes criticalPulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.4)}50%{box-shadow:0 0 0 4px rgba(192,57,43,.15)}}
+.tag-critical{animation:criticalPulse 2s ease-in-out infinite}
+.export-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border-md);background:var(--navy-raised);color:var(--text-muted);transition:all .15s}
+.export-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
 .note-tooltip{position:fixed;background:var(--navy-raised);border:1px solid var(--accent);border-radius:6px;padding:8px 12px;font-size:11px;color:var(--text-pri);font-weight:500;max-width:400px;z-index:9999;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4);opacity:0;transition:opacity .1s;white-space:normal;line-height:1.6}
 .note-tooltip.visible{opacity:1}
 .itd-bar{display:inline-flex;align-items:center;gap:5px}
@@ -242,7 +247,8 @@ tr.pay-fac-active td:first-child::after{
 /* PAYMENT / FEE REDESIGN */
 .pay-header{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
 .pay-summary-cards{display:flex;gap:10px;flex-wrap:wrap}
-.pay-sum-card{background:var(--navy-card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:140px}
+.pay-sum-card{background:var(--navy-card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:140px;transition:transform .1s,box-shadow .1s}
+.pay-sum-card[onclick]:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .pay-sum-card .psc-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:4px}
 .pay-sum-card .psc-val{font-size:18px;font-weight:600;letter-spacing:-.3px;color:var(--text-pri)}
 .pay-sum-card .psc-sub{font-size:9px;color:var(--text-muted);margin-top:2px}
@@ -476,6 +482,8 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
       </select>
       <div class="search-box"><i class="ti ti-search"></i><input type="text" placeholder="Search facility…" id="searchFacility" oninput="renderFacilities()"></div>
       <span style="font-size:10px;color:var(--text-muted);margin-left:4px" id="sortHint">Click any column header to sort</span>
+      <span style="flex:1"></span>
+      <span class="export-btn" onclick="exportFacilities()"><i class="ti ti-download" style="font-size:12px"></i> Export</span>
     </div>
     <div class="facility-table-wrap">
       <div class="table-head-row">
@@ -542,6 +550,8 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
         <i class="ti ti-search"></i>
         <input type="text" placeholder="Search…" id="upcomingSearch" oninput="renderUpcomingByDate()">
       </div>
+      <span style="flex:1"></span>
+      <span class="export-btn" onclick="exportUpcoming()"><i class="ti ti-download" style="font-size:12px"></i> Export</span>
     </div>
 
     <!-- BY DATE: flat grid for perfect alignment -->
@@ -600,7 +610,7 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
   <!-- CLEANUP WATCH TAB -->
   <div class="tab-content" id="content-cleanup">
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.6;padding:6px 0">
-      Tracks how long each draw has been outstanding relative to facility cleanup provisions. <strong style="color:var(--red)">Past Target</strong> = at or past a cleanup deadline. <strong style="color:var(--amber)">Approaching</strong> = ≥80% of a target. Click any row to see individual draws.
+      Tracks how long each draw has been outstanding relative to facility cleanup provisions. <strong style="color:var(--red)">Breached</strong> = past required cleanup. <strong style="color:#c0392b">Critical</strong> = ≤30 days to required. <strong style="color:var(--amber)">Warning</strong> = ≤60 days to required. Click tiles to filter or any row to drill down.
     </div>
     <div class="pay-header">
       <div class="pay-summary-cards" id="cleanupSummaryCards"></div>
@@ -608,14 +618,20 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
         <div class="filter-group">
           <span class="filter-label">Show:</span>
           <select id="cleanupFilter" onchange="renderCleanupWatch()">
-            <option value="flagged">Approaching / past target only</option>
-            <option value="all">All draws with a target set</option>
+            <option value="all">All facilities</option>
+            <option value="breached-required">Breached</option>
+            <option value="critical">Critical</option>
+            <option value="warning">Warning</option>
+            <option value="breached-target">Past Internal</option>
+            <option value="ok">On Track</option>
           </select>
         </div>
         <div class="search-box" style="max-width:200px">
           <i class="ti ti-search"></i>
           <input type="text" placeholder="Search…" id="cleanupSearch" oninput="renderCleanupWatch()">
         </div>
+        <span style="flex:1"></span>
+        <span class="export-btn" onclick="exportCleanup()"><i class="ti ti-download" style="font-size:12px"></i> Export</span>
       </div>
     </div>
     <div class="pay-full-panel">
@@ -627,8 +643,8 @@ tr.fac-row-active td:first-child{border-left:2px solid var(--accent)}
           <div class="cw-cell cw-num" onclick="setCleanupSort('oldest')" data-ccol="oldest">Oldest Draw <span class="col-sort-icon"></span></div>
           <div class="cw-cell cw-num" onclick="setCleanupSort('tgt')" data-ccol="tgt">Internal Target <span class="col-sort-icon"></span></div>
           <div class="cw-cell cw-num" onclick="setCleanupSort('req')" data-ccol="req">Required Cleanup <span class="col-sort-icon"></span></div>
-          <div class="cw-cell cw-num" onclick="setCleanupSort('pcttgt')" data-ccol="pcttgt">% of Internal <span class="col-sort-icon"></span></div>
-          <div class="cw-cell cw-num" onclick="setCleanupSort('pctreq')" data-ccol="pctreq">% of Required <span class="col-sort-icon"></span></div>
+          <div class="cw-cell cw-num" onclick="setCleanupSort('pcttgt')" data-ccol="pcttgt">To Internal <span class="col-sort-icon"></span></div>
+          <div class="cw-cell cw-num" onclick="setCleanupSort('pctreq')" data-ccol="pctreq">To Required <span class="col-sort-icon"></span></div>
           <div class="cw-cell cw-num" onclick="setCleanupSort('flagged')" data-ccol="flagged">Draws Flagged <span class="col-sort-icon"></span></div>
           <div class="cw-cell" onclick="setCleanupSort('urgency')" data-ccol="urgency">Status <span class="col-sort-icon"></span></div>
           <div class="cw-cell">Notes</div>
@@ -764,6 +780,11 @@ let cleanupSortDir = -1;
 function setCleanupSort(col) {
   if (cleanupSortCol === col) cleanupSortDir *= -1;
   else { cleanupSortCol = col; cleanupSortDir = (col === 'name' || col === 'lender') ? 1 : -1; }
+  renderCleanupWatch();
+}
+
+function setCleanupFilterStatus(status) {
+  document.getElementById('cleanupFilter').value = status;
   renderCleanupWatch();
 }
 
@@ -1636,21 +1657,26 @@ function buildCleanupFacilities() {
       const pctReq = reqDays ? (outstanding / reqDays * 100) : null;
       const pctTgt = tgtDays ? (outstanding / tgtDays * 100) : null;
 
-      let status = 'ok', statusLabel = 'OK', statusColor = 'var(--green)';
+      let status = 'ok', statusLabel = 'On Track', statusColor = 'var(--green)';
+      const daysToReq = reqDays !== null ? (reqDays - outstanding) : null;
+      const daysToTgt = tgtDays !== null ? (tgtDays - outstanding) : null;
+
       if (reqDays !== null && outstanding >= reqDays) {
-        status = 'breached-required'; statusLabel = 'Past Required'; statusColor = 'var(--red)';
+        status = 'breached-required'; statusLabel = 'Breached'; statusColor = 'var(--red)';
+      } else if (daysToReq !== null && daysToReq <= 30) {
+        status = 'critical'; statusLabel = 'Critical'; statusColor = '#c0392b';
+      } else if (daysToReq !== null && daysToReq <= 60) {
+        status = 'warning'; statusLabel = 'Warning'; statusColor = 'var(--amber)';
       } else if (tgtDays !== null && outstanding >= tgtDays) {
-        status = 'breached-target'; statusLabel = 'Past Internal Target'; statusColor = 'var(--red)';
-      } else if ((pctReq !== null && pctReq >= 80) || (pctTgt !== null && pctTgt >= 80)) {
-        status = 'approaching'; statusLabel = 'Approaching'; statusColor = 'var(--amber)';
+        status = 'breached-target'; statusLabel = 'Past Internal'; statusColor = '#d08050';
       }
 
       return {
         security_code: d.security_code || '—',
         drawn: d.drawn, open_date: d.open_date, notes: d.notes || '',
-        outstanding, pctReq, pctTgt,
+        outstanding, pctReq, pctTgt, daysToReq, daysToTgt,
         status, statusLabel, statusColor,
-        urgency: Math.max(pctReq || 0, pctTgt || 0)
+        urgency: status === 'breached-required' ? 4000 - (daysToReq ?? 0) : status === 'critical' ? 3000 - (daysToReq ?? 0) : status === 'warning' ? 2000 - (daysToReq ?? 0) : status === 'breached-target' ? 1000 - (daysToTgt ?? 0) : 0 - (daysToReq ?? 999)
       };
     });
 
@@ -1664,6 +1690,8 @@ function buildCleanupFacilities() {
       oldest: Math.max(...draws.map(d => d.outstanding)),
       worstPctTgt: Math.max(...draws.map(d => d.pctTgt ?? -1)),
       worstPctReq: Math.max(...draws.map(d => d.pctReq ?? -1)),
+      worstDaysToTgt: tgtDays !== null ? Math.min(...draws.map(d => d.daysToTgt ?? Infinity)) : null,
+      worstDaysToReq: reqDays !== null ? Math.min(...draws.map(d => d.daysToReq ?? Infinity)) : null,
       urgency: worst.urgency,
       status: worst.status, statusLabel: worst.statusLabel, statusColor: worst.statusColor
     });
@@ -1679,17 +1707,21 @@ function renderCleanupWatch() {
   let facs = buildCleanupFacilities();
 
   const totalDraws = facs.reduce((s,f) => s + f.totalDraws, 0);
-  const breachedCount = facs.reduce((s,f) => s + f.draws.filter(d=>d.status==='breached-required'||d.status==='breached-target').length, 0);
-  const approachingCount = facs.reduce((s,f) => s + f.draws.filter(d=>d.status==='approaching').length, 0);
-  document.getElementById('cnt-cleanup').textContent = breachedCount + approachingCount;
+  const breachedCount = facs.reduce((s,f) => s + f.draws.filter(d=>d.status==='breached-required').length, 0);
+  const criticalCount = facs.reduce((s,f) => s + f.draws.filter(d=>d.status==='critical').length, 0);
+  const warningCount = facs.reduce((s,f) => s + f.draws.filter(d=>d.status==='warning').length, 0);
+  const pastTargetCount = facs.reduce((s,f) => s + f.draws.filter(d=>d.status==='breached-target').length, 0);
+  document.getElementById('cnt-cleanup').textContent = breachedCount + criticalCount + warningCount;
 
   document.getElementById('cleanupSummaryCards').innerHTML = `
-    <div class="pay-sum-card" style="border-top:2px solid var(--red)"><div class="psc-label">Past Target</div><div class="psc-val" style="color:var(--red)">${breachedCount}</div><div class="psc-sub">at or past a cleanup deadline</div></div>
-    <div class="pay-sum-card" style="border-top:2px solid var(--amber)"><div class="psc-label">Approaching</div><div class="psc-val" style="color:var(--amber)">${approachingCount}</div><div class="psc-sub">≥ 80% of a target</div></div>
-    <div class="pay-sum-card"><div class="psc-label">Draws tracked</div><div class="psc-val">${totalDraws}</div><div class="psc-sub">across ${facs.length} facilities with a target</div></div>`;
+    <div class="pay-sum-card" style="border-top:2px solid var(--red);cursor:pointer" onclick="setCleanupFilterStatus('breached-required')"><div class="psc-label">Breached</div><div class="psc-val" style="color:var(--red)">${breachedCount}</div><div class="psc-sub">past required cleanup</div></div>
+    <div class="pay-sum-card" style="border-top:2px solid #c0392b;cursor:pointer" onclick="setCleanupFilterStatus('critical')"><div class="psc-label">Critical</div><div class="psc-val" style="color:#c0392b">${criticalCount}</div><div class="psc-sub">≤ 30 days to required</div></div>
+    <div class="pay-sum-card" style="border-top:2px solid var(--amber);cursor:pointer" onclick="setCleanupFilterStatus('warning')"><div class="psc-label">Warning</div><div class="psc-val" style="color:var(--amber)">${warningCount}</div><div class="psc-sub">≤ 60 days to required</div></div>
+    <div class="pay-sum-card" style="border-top:2px solid #d08050;cursor:pointer" onclick="setCleanupFilterStatus('breached-target')"><div class="psc-label">Past Internal</div><div class="psc-val" style="color:#d08050">${pastTargetCount}</div><div class="psc-sub">past internal target</div></div>
+    <div class="pay-sum-card" style="cursor:pointer" onclick="setCleanupFilterStatus('all')"><div class="psc-label">Tracked</div><div class="psc-val">${totalDraws}</div><div class="psc-sub">${facs.length} facilities</div></div>`;
 
-  if (filterMode === 'flagged') {
-    facs = facs.filter(f => f.flaggedCount > 0);
+  if (filterMode !== 'all') {
+    facs = facs.filter(f => f.draws.some(d => d.status === filterMode));
   }
   if (search) {
     facs = facs.filter(f => f.name.toLowerCase().includes(search) || f.lender.toLowerCase().includes(search));
@@ -1715,7 +1747,7 @@ function renderCleanupWatch() {
 
   const rowsHTML = facs.map(f => {
     const isExpanded = state.expandedCleanupRows.has(f.account);
-    const rowBg = f.status === 'breached-required' ? 'rgba(220,80,80,.08)' : f.status === 'breached-target' ? 'rgba(220,80,80,.05)' : f.status === 'approaching' ? 'rgba(210,150,50,.07)' : '';
+    const rowBg = f.status === 'breached-required' ? 'rgba(220,80,80,.16)' : f.status === 'critical' ? 'rgba(192,57,43,.16)' : f.status === 'warning' ? 'rgba(210,150,50,.14)' : f.status === 'breached-target' ? 'rgba(208,128,80,.12)' : '';
 
     const summaryRow = `<div class="cw-row cw-summary${isExpanded?' expanded':''}" onclick="toggleCleanupDrill('${f.account}')" style="background:${rowBg}">
       <div class="cw-cell" style="position:relative"><span class="expand-icon ti ti-chevron-right"></span></div>
@@ -1724,10 +1756,10 @@ function renderCleanupWatch() {
       <div class="cw-cell cw-num" style="font-weight:600">${f.oldest}d</div>
       <div class="cw-cell cw-num" style="color:var(--text-muted)">${days(f.tgtDays)}</div>
       <div class="cw-cell cw-num" style="color:var(--text-muted)">${days(f.reqDays)}</div>
-      <div class="cw-cell cw-num" style="color:${f.worstPctTgt>=80?'var(--amber)':'var(--text-muted)'}">${pct(f.worstPctTgt)}</div>
-      <div class="cw-cell cw-num" style="color:${f.worstPctReq>=80?'var(--amber)':'var(--text-muted)'}">${pct(f.worstPctReq)}</div>
+      <div class="cw-cell cw-num" style="color:${f.worstDaysToTgt!==null&&f.worstDaysToTgt<=0?'var(--red)':f.worstDaysToTgt!==null&&f.worstDaysToTgt<=30?'var(--amber)':'var(--text-muted)'}">${f.worstDaysToTgt!==null?(f.worstDaysToTgt<=0?Math.abs(f.worstDaysToTgt)+'d past':f.worstDaysToTgt+'d'):'—'}</div>
+      <div class="cw-cell cw-num" style="font-weight:600;color:${f.worstDaysToReq!==null&&f.worstDaysToReq<=0?'var(--red)':f.worstDaysToReq!==null&&f.worstDaysToReq<=10?'#c0392b':f.worstDaysToReq!==null&&f.worstDaysToReq<=30?'var(--amber)':'var(--text-muted)'}">${f.worstDaysToReq!==null?(f.worstDaysToReq<=0?Math.abs(f.worstDaysToReq)+'d past':f.worstDaysToReq+'d'):'—'}</div>
       <div class="cw-cell cw-num">${f.flaggedCount} / ${f.totalDraws}</div>
-      <div class="cw-cell"><span class="tag" style="background:${f.statusColor}22;color:${f.statusColor};border:1px solid ${f.statusColor}55;font-weight:600">${f.statusLabel}</span></div>
+      <div class="cw-cell"><span class="tag${f.status==='critical'?' tag-critical':''}" style="background:${f.statusColor}22;color:${f.statusColor};border:1px solid ${f.statusColor}55;font-weight:600">${f.statusLabel}</span></div>
       <div class="cw-cell"></div>
     </div>`;
 
@@ -1745,8 +1777,8 @@ function renderCleanupWatch() {
         <div class="cw-cell cw-num">Days Out</div>
         <div class="cw-cell cw-num">Open Date</div>
         <div class="cw-cell cw-num"></div>
-        <div class="cw-cell">vs Internal Target</div>
-        <div class="cw-cell">vs Required Cleanup</div>
+        <div class="cw-cell">Days to Internal</div>
+        <div class="cw-cell">Days to Required</div>
         <div class="cw-cell"></div>
         <div class="cw-cell">Status</div>
         <div class="cw-cell">Notes</div>
@@ -1754,15 +1786,33 @@ function renderCleanupWatch() {
 
       const sortedDraws = f.draws.slice().sort((a,b) => b.urgency - a.urgency);
 
-      function cleanupBar(outstanding, limit, pct) {
+      function cleanupBar(outstanding, limit, pct, daysLeft) {
         if (limit === null || limit === undefined || pct < 0) return '<span style="color:var(--border-md);font-size:10px">N/A</span>';
+        var remaining = limit - outstanding;
+        var isPast = remaining <= 0;
         var fillPct = Math.min(pct, 120);
-        var barColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : 'var(--green)';
-        var label = outstanding + 'd / ' + limit + 'd';
+        var label, labelColor, barColor;
+        if (isPast) {
+          label = Math.abs(remaining) + 'd past';
+          labelColor = 'var(--red)';
+          barColor = 'var(--red)';
+        } else if (remaining <= 30) {
+          label = remaining + 'd left';
+          labelColor = '#c0392b';
+          barColor = '#c0392b';
+        } else if (remaining <= 60) {
+          label = remaining + 'd left';
+          labelColor = 'var(--amber)';
+          barColor = 'var(--amber)';
+        } else {
+          label = remaining + 'd left';
+          labelColor = 'var(--green)';
+          barColor = 'var(--green)';
+        }
         return '<div style="font-size:10px;line-height:1.3">' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
-            '<span style="font-weight:600;color:' + (pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : 'var(--text-sec)') + '">' + label + '</span>' +
-            '<span style="color:var(--text-muted);font-size:9px">' + pct.toFixed(0) + '%</span>' +
+            '<span style="font-weight:600;color:' + labelColor + '">' + label + '</span>' +
+            '<span style="color:var(--text-muted);font-size:9px">' + outstanding + 'd / ' + limit + 'd</span>' +
           '</div>' +
           '<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">' +
             '<div style="height:100%;width:' + Math.min(fillPct, 100) + '%;background:' + barColor + ';border-radius:2px;transition:width .2s"></div>' +
@@ -1778,10 +1828,10 @@ function renderCleanupWatch() {
         <div class="cw-cell cw-num" style="font-weight:600">${d.outstanding}d</div>
         <div class="cw-cell cw-num">${fmtDate(d.open_date)}</div>
         <div class="cw-cell"></div>
-        <div class="cw-cell">${cleanupBar(d.outstanding, f.tgtDays, d.pctTgt !== null ? d.pctTgt : -1)}</div>
-        <div class="cw-cell">${cleanupBar(d.outstanding, f.reqDays, d.pctReq !== null ? d.pctReq : -1)}</div>
+        <div class="cw-cell">${cleanupBar(d.outstanding, f.tgtDays, d.pctTgt !== null ? d.pctTgt : -1, d.daysToTgt)}</div>
+        <div class="cw-cell">${cleanupBar(d.outstanding, f.reqDays, d.pctReq !== null ? d.pctReq : -1, d.daysToReq)}</div>
         <div class="cw-cell"></div>
-        <div class="cw-cell"><span class="tag" style="background:${d.statusColor}22;color:${d.statusColor};border:1px solid ${d.statusColor}55;font-weight:600">${d.statusLabel}</span></div>
+        <div class="cw-cell"><span class="tag${d.status==='critical'?' tag-critical':''}" style="background:${d.statusColor}22;color:${d.statusColor};border:1px solid ${d.statusColor}55;font-weight:600">${d.statusLabel}</span></div>
         <div class="cw-cell">${d.notes ? `<span class="draw-note">${d.notes}</span>` : '<span style="color:var(--border-md);font-size:10px">—</span>'}</div>
       </div>`;
       }).join('');
@@ -1819,6 +1869,87 @@ function populateLenderFilter() {
   const lenders = [...new Set(Object.values(LOC_META).map(m=>m.lender).filter(Boolean))].sort();
   const sel = document.getElementById('filterLender');
   lenders.forEach(l => { const o = document.createElement('option'); o.value=l; o.textContent=l; sel.appendChild(o); });
+}
+
+// ─── EXPORT TO EXCEL ──────────────────────────────────────────────────────────
+function exportXLSX(data, sheetName, filename) {
+  if (typeof XLSX === 'undefined') { alert('Export library not loaded. Check your internet connection.'); return; }
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, filename);
+}
+
+function exportFacilities() {
+  const rows = state.facilities.map(f => {
+    const m = LOC_META[f.account] || {};
+    return {
+      Facility: m.display || f.portfolio,
+      Lender: m.lender || '',
+      Admin: m.admin || '',
+      CCY: m.ccy || 'USD',
+      Commitment: f.commitment,
+      Drawn: f.total_drawn,
+      Available: f.availability,
+      'Utilization %': f.utilization_pct,
+      Draws: f.num_draws,
+      'Oldest ITD': f.oldest_itd,
+      'Next Reset': f.earliest_reset || ''
+    };
+  });
+  const d = state.dataDate || new Date().toISOString().slice(0,10);
+  exportXLSX(rows, 'Facilities', 'LOC_Facilities_' + d + '.xlsx');
+}
+
+function exportUpcoming() {
+  const isPerei = p => payMapLookup(p.agreement).length > 0;
+  const payRows = state.payments.filter(isPerei).map(p => ({
+    Type: 'Payment',
+    Facility: resolvePaymentDisplay(p.agreement, p.security_code),
+    'Security Code': p.security_code.replace(/\u00a0/g,' '),
+    'Reset Date': p.reset_date,
+    CCY: p.ccy,
+    Drawn: p.drawn_amount,
+    'Interest Due': p.payment_amount
+  }));
+  const feeRows = state.fees.filter(f => isPereiAgreement(f.agreement)).map(f => ({
+    Type: 'Fee',
+    Facility: f.agreement,
+    'Security Code': '',
+    'Reset Date': f.reset_date,
+    CCY: '',
+    Drawn: f.unused_amount,
+    'Interest Due': f.amount,
+    'Fee Type': f.fee_type,
+    Rate: f.rate
+  }));
+  const d = state.dataDate || new Date().toISOString().slice(0,10);
+  exportXLSX([...payRows, ...feeRows], 'Upcoming', 'LOC_Upcoming_' + d + '.xlsx');
+}
+
+function exportCleanup() {
+  const facs = buildCleanupFacilities();
+  const rows = [];
+  facs.forEach(f => {
+    f.draws.forEach(d => {
+      rows.push({
+        Facility: f.name,
+        Lender: f.lender,
+        'Security Code': d.security_code,
+        Drawn: d.drawn,
+        'Days Outstanding': d.outstanding,
+        'Open Date': d.open_date || '',
+        'Internal Target': f.tgtDays,
+        'Days to Internal': d.daysToTgt,
+        'Required Cleanup': f.reqDays,
+        'Days to Required': d.daysToReq,
+        Status: d.statusLabel,
+        Notes: d.notes
+      });
+    });
+  });
+  const d = state.dataDate || new Date().toISOString().slice(0,10);
+  exportXLSX(rows, 'Paydown Monitor', 'LOC_Paydown_' + d + '.xlsx');
 }
 
 // ─── LOAD DATA ────────────────────────────────────────────────────────────────

@@ -1661,13 +1661,16 @@ function buildCleanupFacilities() {
   const facs = [];
   state.facilities.forEach(f => {
     if (!f.draws || !f.draws.length) return;
+    if (f.total_drawn === 0) return;
     const meta = LOC_META[f.account] || {};
     const name = meta.display || f.portfolio;
     const lender = meta.lender || '—';
     const ccy = meta.ccy || 'USD';
     const reqDays = parseCleanupDays(meta.required_cleanup);
     const tgtDays = parseCleanupDays(meta.internal_target_cleanup);
-    if (reqDays === null && tgtDays === null) return; // nothing to measure against
+    if (reqDays === null && tgtDays === null) {
+      // No cleanup provision — still show, but all draws are "On Track" with N/A bars
+    }
 
     const draws = f.draws.map(d => {
       const outstanding = d.itd || 0;

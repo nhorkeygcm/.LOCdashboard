@@ -677,7 +677,6 @@ const LOC_META = {
   "WPP_ACCT":{"display":"WPP","lender":"Sumi Trust (London)","client":"Wales Pension","admin":"GCM","ccy":"GBP","commitment":20000000,"vertical":"PEREI","required_cleanup":"360","internal_target_cleanup":"90"},
   "WPP_Infra_II_ACCT":{"display":"WPP II","lender":"Sumi Trust (London)","client":"Wales Pension","admin":"GCM","ccy":"GBP","commitment":30000000,"vertical":"PEREI","required_cleanup":"360","internal_target_cleanup":"90"},
   "WPP_UK_ACCT":{"display":"WPP UK","lender":"Sumi Trust (London)","client":"Wales Pension","admin":"GCM","ccy":"GBP","commitment":25000000,"vertical":"PEREI","required_cleanup":"360","internal_target_cleanup":"90"},
-  "Edisto 2026_ACCT":{"display":"Edisto 2026","lender":"MUFG","client":"RSIC","admin":"SEI","ccy":"USD","commitment":100000000,"vertical":"PEREI"},
   "EDISTO 2026_ACCT":{"display":"Edisto 2026","lender":"MUFG","client":"RSIC","admin":"SEI","ccy":"USD","commitment":100000000,"vertical":"PEREI"},
   "Credit Spirit V":{"display":"Credit Spirit V","lender":"Sumi Trust","client":"CIC","admin":"GCM","ccy":"USD","commitment":80000000,"vertical":"PEREI","distribution_rules":"30BD; Vertical Team Monitoring","required_cleanup":"180CD","internal_target_cleanup":"180CD"},
   "REV 2024 ST_ACCT":{"display":"REV 2024","lender":"EWB","client":"","admin":"SEI","ccy":"USD","commitment":25000000,"vertical":"PEREI","distribution_rules":"TBD","internal_target_cleanup":"Standard Borrowing Framework"},
@@ -702,6 +701,7 @@ const LOC_META = {
   "Peloton III_ACCT":{"display":"Peloton III","lender":"Sumi Trust","client":"CoPERA","admin":"GCM","ccy":"USD","commitment":5000000,"vertical":"PEREI","required_cleanup":"180"},
   "LIF_ACCT":{"display":"LIF","lender":"Goldman Sachs","client":"Commingled","admin":"SEI","ccy":"USD","commitment":100000000,"vertical":"PEREI","distribution_rules":"Event Driven in conjunction with Investments"},
   "Iceni_ACCT":{"display":"Iceni","lender":"Goldman Sachs","client":"Kennedy Lewis","admin":"SEI","ccy":"USD","commitment":50000000,"vertical":"PEREI","required_cleanup":"90CD"},
+  "ICENI_ECI_ACCT":{"display":"Iceni ECI","lender":"Goldman Sachs","client":"Kennedy Lewis","admin":"GCM","ccy":"USD","commitment":50000000,"vertical":"PEREI"},
   "DIVDEBT_ACCT":{"display":"Div Debt (CPE)","lender":"Goldman Sachs","client":"CPE","admin":"SEI","ccy":"USD","commitment":55000000,"vertical":"PEREI","internal_target_cleanup":"90"},
   "IAF II_ACCT":{"display":"IAF II","lender":"Goldman Sachs","client":"Commingled","admin":"SEI","ccy":"USD","commitment":200000000,"vertical":"PEREI"},
   "CGIF_ACCT":{"display":"CGIF","lender":"UBS","client":"CION","admin":"SEI","ccy":"USD","commitment":60000000,"vertical":"SIG"},
@@ -731,7 +731,8 @@ const PAY_MAP = {
   "GCM PACIFIC 2020":["GCM PACIFIC 2020 PE_ACCT","GCM PACIFIC 2020 INFRA_ACCT"],
   "IAF II":["IAF II_ACCT"],
   "TRS PRIV MKTS":["TRS Priv Mkts_ACCT"],
-  "ICENI":["Iceni_ACCT"],
+  "ICENI":["Iceni_ACCT","ICENI_ECI_ACCT"],
+  "ICENI-ECI":["ICENI_ECI_ACCT"],
   "CPE":["DIVDEBT_ACCT"],
   "EDISTO 2026":["EDISTO 2026_ACCT"],
   "WPP Infra II":["WPP_Infra_II_ACCT"],
@@ -746,7 +747,7 @@ const PEREI_FEE_AGREEMENTS = new Set([
   "GSF II","GSF IV","MS RE","GCM PACIFIC 2020","GSF III","GCF III","PCF",
   "TRS Priv Mkts","ELEVATE","CIS IV","MACIII-A","POBA","WPP","IAF II",
   "CGIF","CSF I","REV 2024 ST","EDISTO 2026","CIS III",
-  "WPP Infra II","WPP UK","Credit Spirit IV","Credit Spirit V"
+  "WPP Infra II","WPP UK","Credit Spirit IV","Credit Spirit V","ICENI-ECI"
 ]);
 
 // Normalize non-breaking spaces (\xa0) to regular spaces for Hazeltree data
@@ -921,6 +922,9 @@ function renderFacilities() {
 
   let active = state.facilities.filter(f => f.total_drawn !== 0).filter(filterFn);
   let inactive = state.facilities.filter(f => f.total_drawn === 0).filter(filterFn);
+  // Deduplicate: if an account appears in both active and inactive, remove from inactive
+  const activeAccounts = new Set(active.map(f => f.account));
+  inactive = inactive.filter(f => !activeAccounts.has(f.account));
 
   // Also add $0-drawn facilities that exist only in LOC_META (not in Loan Board)
   const knownAccounts = new Set(state.facilities.map(f => f.account));
@@ -1054,6 +1058,19 @@ function renderFacilities() {
                 <td>${d.notes ? `<span class="draw-note">${d.notes}</span>` : '<span style="color:var(--border-md);font-size:10px">—</span>'}</td>
               </tr>`;
             }).join('')}
+            ${(() => {
+              const totalDrawn = f.draws.reduce((s,d) => s + d.drawn, 0);
+              const totalAccrual = f.draws.reduce((s,d) => s + (d.daily_accrual||0), 0);
+              const totalIntDue = f.draws.reduce((s,d) => s + (d.next_payment||0), 0);
+              return `<tr style="border-top:2px solid var(--text-muted);font-weight:600;font-size:11px;color:var(--text-pri)">
+                <td>TOTAL (${f.draws.length} draws)</td>
+                <td class="dn neg">${fmt(totalDrawn)}</td>
+                <td class="dn" colspan="8"></td>
+                <td class="dn neg">${fmtPC(totalAccrual, ccy)}</td>
+                <td class="dn neg">${fmtPC(totalIntDue, ccy)}</td>
+                <td></td>
+              </tr>`;
+            })()}
             </tbody>
           </table>
         </div></td>

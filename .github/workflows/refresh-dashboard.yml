@@ -1,0 +1,61 @@
+# Refresh LOC Dashboard
+# Triggers when Power Automate pushes new Hazeltree files to data/
+# Parses the data and commits the updated HTML so GitHub Pages re-deploys.
+#
+# To remove this automation:
+#   1. Delete this file and ci_refresh.py
+#   2. Remove the HTTP steps from your Power Automate flows
+#   Your local refresh_dashboard.py and bat file are unchanged.
+
+name: Refresh LOC Dashboard
+
+on:
+  push:
+    paths:
+      - 'data/**'
+
+  # Safety-net: run once daily at 6 PM Chicago time (23:00 UTC)
+  # in case a PA push didn't trigger the workflow
+  schedule:
+    - cron: '0 23 * * 1-5'   # Mon-Fri at 6 PM CT
+
+  # Manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install beautifulsoup4
+
+      - name: Check for data files
+        run: |
+          echo "Checking data/ directory..."
+          ls -la data/ || { echo "No data/ directory found. Skipping."; exit 0; }
+
+      - name: Run CI refresh
+        run: python ci_refresh.py
+
+      - name: Commit and push updated dashboard
+        run: |
+          git config user.name "LOC Dashboard Bot"
+          git config user.email "nhorkey@gcmlp.com"
+          git add GCM_LOC_Dashboard.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Auto-refresh LOC data $(date -u +%Y-%m-%d)"
+            git push
+          fi

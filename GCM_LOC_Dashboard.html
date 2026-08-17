@@ -1974,7 +1974,7 @@ function exportCleanup() {
 
 // ─── LOAD DATA ────────────────────────────────────────────────────────────────
 function loadSnapshot() {
-  // Embedded snapshot from Loan Board LD 2026-08-16
+  // Embedded snapshot from Loan Board LD 2026-08-17
   const facilities = [];
 
   const payments = [];
@@ -1985,14 +1985,14 @@ function loadSnapshot() {
   state.facilities = facilities;
   state.payments = payments;
   state.fees = fees;
-  state.dataDate = '2026-08-16';
+  state.dataDate = '2026-08-17';
 
-  document.getElementById('statusText').textContent = 'Snapshot · Aug 16';
+  document.getElementById('statusText').textContent = 'Snapshot · Aug 17';
   const pill = document.getElementById('statusPill');
   pill.classList.add('stale');
   // Show last-refreshed time
   var refreshTime = new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
-  document.getElementById('dataDateLabel').textContent = 'Data as of August 16, 2026 · Hit Refresh to load latest' + refreshTime;
+  document.getElementById('dataDateLabel').textContent = 'Data as of August 17, 2026 · Hit Refresh to load latest' + refreshTime;
 
   populateLenderFilter();
   updateMetrics();

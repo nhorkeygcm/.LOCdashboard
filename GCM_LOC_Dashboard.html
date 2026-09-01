@@ -840,7 +840,7 @@ const fmt = (n, decimals=0) => {
   const abs = Math.abs(n);
   const sign = n < 0 ? '-' : '';
   if (abs >= 1e9) return sign + '$' + (abs/1e9).toFixed(2) + 'B';
-  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(1) + 'M';
+  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(2) + 'M';
   if (abs >= 1e3) return sign + '$' + Math.round(abs/1e3) + 'K';
   return (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:decimals});
 };
@@ -850,7 +850,7 @@ const fmtC = (n, ccy, decimals=0) => {
   const abs = Math.abs(n);
   const sign = n < 0 ? '-' : '';
   if (abs >= 1e9) return sign + sym + (abs/1e9).toFixed(2) + 'B';
-  if (abs >= 1e6) return sign + sym + (abs/1e6).toFixed(1) + 'M';
+  if (abs >= 1e6) return sign + sym + (abs/1e6).toFixed(2) + 'M';
   if (abs >= 1e3) return sign + sym + Math.round(abs/1e3) + 'K';
   return (n < 0 ? '-' : '') + sym + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:decimals});
 };
@@ -1223,7 +1223,7 @@ function renderPayments() {
       return `<tr>
         <td style="color:var(--text-pri);font-weight:500">${display}</td>
         <td style="font-size:11px;color:var(--text-muted)">${p.security_code}</td>
-        <td class="dn" style="color:var(--text-muted)">${fmt(p.drawn_amount)}</td>
+        <td class="dn" style="color:var(--text-muted)">${fmtC(p.drawn_amount, p.ccy)}</td>
         <td class="dn" style="color:#d07070;font-weight:500">${fmtPC(p.payment_amount, p.ccy)}</td>
         <td><span class="tag ${p.ccy==='GBP'?'tag-gbp':'tag-usd'}">${p.ccy}</span></td>
       </tr>`;
@@ -1314,7 +1314,7 @@ function renderPayments() {
                 <td style="color:var(--text-sec)">${d.security_code}</td>
                 <td class="dn">${d.reset_date}</td>
                 <td class="dn" style="color:${dColor};font-weight:500">${dOut}d</td>
-                <td class="dn" style="color:var(--text-muted)">${fmt(d.drawn_amount)}</td>
+                <td class="dn" style="color:var(--text-muted)">${fmtC(d.drawn_amount, d.ccy)}</td>
                 <td class="dn" style="color:#d07070;font-weight:500">${fmtPC(d.payment_amount, d.ccy)}</td>
                 <td><span class="tag ${d.ccy==='GBP'?'tag-gbp':'tag-usd'}">${d.ccy}</span></td>
               </tr>`;
@@ -1544,7 +1544,7 @@ function renderUpcomingByDate() {
       pRows.forEach(function(p) {
         var accts = payMapLookup(p.agreement) || [];
         var display = resolvePaymentDisplay(p.agreement, p.security_code);
-        gridHTML += '<tr><td style="font-weight:500;color:var(--text-pri)">' + display + '</td><td style="color:var(--text-muted)">' + p.security_code + '</td><td class="dn" style="color:var(--text-muted);text-align:right">' + fmt(p.drawn_amount) + '</td><td class="dn" style="color:#d07070;font-weight:500;text-align:right">' + fmtPC(p.payment_amount, p.ccy) + '</td><td><span class="tag ' + (p.ccy==='GBP'?'tag-gbp':'tag-usd') + '">' + p.ccy + '</span></td></tr>';
+        gridHTML += '<tr><td style="font-weight:500;color:var(--text-pri)">' + display + '</td><td style="color:var(--text-muted)">' + p.security_code + '</td><td class="dn" style="color:var(--text-muted);text-align:right">' + fmtC(p.drawn_amount, p.ccy) + '</td><td class="dn" style="color:#d07070;font-weight:500;text-align:right">' + fmtPC(p.payment_amount, p.ccy) + '</td><td><span class="tag ' + (p.ccy==='GBP'?'tag-gbp':'tag-usd') + '">' + p.ccy + '</span></td></tr>';
       });
       gridHTML += '</tbody></table>';
     } else {

@@ -671,7 +671,6 @@ const LOC_META = {
   "Z Green_ACCT":{"display":"AZ Evergreen","lender":"UBS Switzerland","client":"Zurich","admin":"Centaur","ccy":"USD","commitment":30000000,"vertical":"PEREI","distribution_rules":"2mo Capital Event","required_cleanup":"365","internal_target_cleanup":"365"},
   "Alpha Z IV_ACCT":{"display":"AZ VI","lender":"UBS Switzerland","client":"Zurich","admin":"SEI","ccy":"USD","commitment":25000000,"vertical":"PEREI","distribution_rules":"2mo Capital Event","required_cleanup":"180","internal_target_cleanup":"90"},
   "Alpha Z PE_ACCT":{"display":"AZ PE I","lender":"UBS Switzerland","client":"Zurich","admin":"SEI","ccy":"USD","commitment":5000000,"vertical":"PEREI","distribution_rules":"2mo Capital Event","required_cleanup":"180","internal_target_cleanup":"90"},
-  "Alpha Z III_ACCT":{"display":"AZ III","lender":"UBS Switzerland","client":"Zurich","admin":"SEI","ccy":"USD","commitment":10000000,"vertical":"PEREI","distribution_rules":"2mo Capital Event","required_cleanup":"180","internal_target_cleanup":"90"},
   "Nestle_ACCT":{"display":"Vertuo","lender":"BNY","client":"Nestle Infra","admin":"SEI Dublin","ccy":"USD","commitment":33000000,"vertical":"PEREI","required_cleanup":"365CD Draw by Draw","internal_target_cleanup":"90"},
   "Nestle-2025_ACCT":{"display":"Vertuo 2025","lender":"BNY","client":"Nestle Infra","admin":"SEI Dublin/Lux","ccy":"USD","commitment":20000000,"vertical":"PEREI","required_cleanup":"365CD Draw by Draw","internal_target_cleanup":"90"},
   "WPP_ACCT":{"display":"WPP","lender":"Sumi Trust (London)","client":"Wales Pension","admin":"GCM","ccy":"GBP","commitment":20000000,"vertical":"PEREI","required_cleanup":"360","internal_target_cleanup":"90"},
@@ -705,6 +704,9 @@ const LOC_META = {
   "DIVDEBT_ACCT":{"display":"Div Debt (CPE)","lender":"Goldman Sachs","client":"CPE","admin":"SEI","ccy":"USD","commitment":55000000,"vertical":"PEREI","internal_target_cleanup":"90"},
   "IAF II_ACCT":{"display":"IAF II","lender":"Goldman Sachs","client":"Commingled","admin":"SEI","ccy":"USD","commitment":200000000,"vertical":"PEREI"},
   "CGIF_ACCT":{"display":"CGIF","lender":"UBS","client":"CION","admin":"SEI","ccy":"USD","commitment":60000000,"vertical":"SIG"},
+  "EWIF II_ACCT":{"display":"EWIF II","lender":"BMO","client":"EWIF","admin":"SEI","ccy":"USD","commitment":75000000,"vertical":"PEREI"},
+  "PARKLAND 2026-1 Private Equity_ACCT":{"display":"Purple Hines PE","lender":"EWB","client":"Purple Hines","admin":"GCM","ccy":"USD","commitment":30000000,"vertical":"PEREI"},
+  "PARKLAND 2026-2 Private Credit_ACCT":{"display":"Purple Hines PC","lender":"EWB","client":"Purple Hines","admin":"GCM","ccy":"USD","commitment":30000000,"vertical":"PEREI"},
   "INDEX_ACCT":{"display":"Index Fund","lender":"TBD","client":"","admin":"TBD","ccy":"USD","commitment":0,"vertical":"PEREI","placeholder":true}
 };
 
@@ -716,7 +718,7 @@ const PAY_MAP = {
   "WPP":["WPP_ACCT","WPP_Infra_II_ACCT","WPP_UK_ACCT"],
   "Nestle":["Nestle_ACCT"],
   "Nestle-2025":["Nestle-2025_ACCT"],
-  "AZ UBS Umbrella":["Z Green_ACCT","Alpha Z IV_ACCT","Alpha Z PE_ACCT","Alpha Z III_ACCT"],
+  "AZ UBS Umbrella":["Z Green_ACCT","Alpha Z IV_ACCT","Alpha Z PE_ACCT"],
   "EMPIRE GCM ANCHOR":["EMPIRE GCM Anchor_ACCT","EMPIRE GCM Anchor2022_ACCT"],
   "CIS III":["CIS III_ACCT"],
   "GCM SELECT":["TRS Priv Mkts_ACCT"],
@@ -739,7 +741,10 @@ const PAY_MAP = {
   "WPP UK":["WPP_UK_ACCT"],
   "REV 2024 ST":["REV 2024 ST_ACCT"],
   "Credit Spirit IV":["Credit Spirit IV_ACCT"],
-  "Credit Spirit V":["Credit Spirit V_ACCT"]
+  "Credit Spirit V":["Credit Spirit V_ACCT"],
+  "EWIF II":["EWIF II_ACCT"],
+  "PARKLAND 2026-1 Private Equity":["PARKLAND 2026-1 Private Equity_ACCT"],
+  "PARKLAND 2026-2 Private Credit":["PARKLAND 2026-2 Private Credit_ACCT"]
 };
 
 const PEREI_FEE_AGREEMENTS = new Set([
@@ -747,7 +752,8 @@ const PEREI_FEE_AGREEMENTS = new Set([
   "GSF II","GSF IV","MS RE","GCM PACIFIC 2020","GSF III","GCF III","PCF",
   "TRS Priv Mkts","ELEVATE","CIS IV","MACIII-A","POBA","WPP","IAF II",
   "CGIF","CSF I","REV 2024 ST","EDISTO 2026","CIS III",
-  "WPP Infra II","WPP UK","Credit Spirit IV","Credit Spirit V","ICENI-ECI","CPE","CPE"
+  "WPP Infra II","WPP UK","Credit Spirit IV","Credit Spirit V","ICENI-ECI","CPE","CPE",
+  "EWIF II","PARKLAND 2026-1 Private Equity","PARKLAND 2026-2 Private Credit"
 ]);
 
 // Normalize non-breaking spaces (\xa0) to regular spaces for Hazeltree data
@@ -773,8 +779,8 @@ function resolvePaymentDisplay(agreement, securityCode) {
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let state = { facilities: [], payments: [], fees: [], dataDate: null, expandedRows: new Set(), expandedPayRows: new Set(), expandedCleanupRows: new Set() };
-let sortCol = 'drawn';
-let sortDir = -1; // -1 = desc, 1 = asc
+let sortCol = 'name';
+let sortDir = 1; // -1 = desc, 1 = asc
 let cleanupSortCol = 'urgency';
 let cleanupSortDir = -1;
 
@@ -2001,7 +2007,7 @@ function loadSnapshot() {
   renderFees();
   renderUpcomingByDate();
   renderCleanupWatch();
-  document.getElementById('facilitySubtitle').textContent = `${facilities.filter(f=>f.total_drawn!==0).length} facilities with active draws · sorted by drawn amount`;
+  document.getElementById('facilitySubtitle').textContent = `${facilities.filter(f=>f.total_drawn!==0).length} facilities with active draws · sorted by facility name`;
 }
 
 // ─── MODAL CONTROLS ──────────────────────────────────────────────────────────

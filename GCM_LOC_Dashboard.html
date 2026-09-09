@@ -677,7 +677,6 @@ const LOC_META = {
   "WPP_Infra_II_ACCT":{"display":"WPP II","lender":"Sumi Trust (London)","client":"Wales Pension","admin":"GCM","ccy":"GBP","commitment":30000000,"vertical":"PEREI","required_cleanup":"360","internal_target_cleanup":"90"},
   "WPP_UK_ACCT":{"display":"WPP UK","lender":"Sumi Trust (London)","client":"Wales Pension","admin":"GCM","ccy":"GBP","commitment":25000000,"vertical":"PEREI","required_cleanup":"360","internal_target_cleanup":"90"},
   "EDISTO 2026_ACCT":{"display":"Edisto 2026","lender":"MUFG","client":"RSIC","admin":"SEI","ccy":"USD","commitment":100000000,"vertical":"PEREI"},
-  "Credit Spirit V":{"display":"Credit Spirit V","lender":"Sumi Trust","client":"CIC","admin":"GCM","ccy":"USD","commitment":80000000,"vertical":"PEREI","distribution_rules":"30BD; Vertical Team Monitoring","required_cleanup":"180CD","internal_target_cleanup":"180CD"},
   "REV 2024 ST_ACCT":{"display":"REV 2024","lender":"EWB","client":"","admin":"SEI","ccy":"USD","commitment":25000000,"vertical":"PEREI","distribution_rules":"TBD","internal_target_cleanup":"Standard Borrowing Framework"},
   "Credit Spirit V_ACCT":{"display":"Credit Spirit V","lender":"Sumi Trust","client":"CIC","admin":"GCM","ccy":"USD","commitment":80000000,"vertical":"PEREI","distribution_rules":"30BD; Vertical Team Monitoring","required_cleanup":"180CD","internal_target_cleanup":"180CD"},
   "GSF III_ACCT":{"display":"GSF III","lender":"JPMorgan","client":"Commingled","admin":"SEI","ccy":"USD","commitment":260000000,"vertical":"PEREI"},
@@ -744,7 +743,14 @@ const PAY_MAP = {
   "Credit Spirit V":["Credit Spirit V_ACCT"],
   "EWIF II":["EWIF II_ACCT"],
   "PARKLAND 2026-1 Private Equity":["PARKLAND 2026-1 Private Equity_ACCT"],
-  "PARKLAND 2026-2 Private Credit":["PARKLAND 2026-2 Private Credit_ACCT"]
+  "PARKLAND 2026-2 Private Credit":["PARKLAND 2026-2 Private Credit_ACCT"],
+  "Nippon":["Nippon_ACCT"],
+  "LIF":["LIF_ACCT"],
+  "Peloton III":["Peloton III_ACCT"],
+  "CIS II":["CIS II_ACCT"],
+  "GCF II":["GCF II_ACCT"],
+  "GSF III":["GSF III_ACCT"],
+  "CSF I":["CSF I_ACCT"]
 };
 
 const PEREI_FEE_AGREEMENTS = new Set([
@@ -753,13 +759,15 @@ const PEREI_FEE_AGREEMENTS = new Set([
   "TRS Priv Mkts","ELEVATE","CIS IV","MACIII-A","POBA","WPP","IAF II",
   "CGIF","CSF I","REV 2024 ST","EDISTO 2026","CIS III",
   "WPP Infra II","WPP UK","Credit Spirit IV","Credit Spirit V","ICENI-ECI","CPE","CPE",
-  "EWIF II","PARKLAND 2026-1 Private Equity","PARKLAND 2026-2 Private Credit"
+  "EWIF II","PARKLAND 2026-1 Private Equity","PARKLAND 2026-2 Private Credit",
+  "Nippon","LIF","Peloton III","CIS II","GCF II","GSF III","CSF I"
 ]);
 
 // Normalize non-breaking spaces (\xa0) to regular spaces for Hazeltree data
 function normAgr(s) { return s ? s.replace(/\u00a0/g, ' ') : s; }
 function payMapLookup(agreement) { return PAY_MAP[normAgr(agreement)] || []; }
-function isPereiAgreement(agreement) { return PEREI_FEE_AGREEMENTS.has(normAgr(agreement)); }
+const PEREI_FEE_LC = new Set([...PEREI_FEE_AGREEMENTS].map(s => s.toLowerCase()));
+function isPereiAgreement(agreement) { return PEREI_FEE_LC.has((normAgr(agreement)||'').toLowerCase()); }
 
 // Resolve display name by matching security_code to the right facility in multi-account agreements
 function resolvePaymentDisplay(agreement, securityCode) {
@@ -1220,7 +1228,7 @@ function renderPayments() {
     const totStr = [usdTotal?`${fmtP(usdTotal)} USD`:'', gbpTotal?`£${gbpTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} GBP`:''].filter(Boolean).join(' + ');
     const daysOut = calcDaysOut(date);
     if (daysOut < 0) return ''; // skip past dates
-    const urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--green)';
+    const urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--text-muted)';
     const isOpen = openPayDates.has(date);
 
     const rowsHTML = rows.map(p => {
@@ -1285,7 +1293,7 @@ function renderPayments() {
   facRows.forEach(r => {
     const isOpen = state.expandedPayRows.has(r.agreement);
     const daysOut = r.nextReset ? calcDaysOut(r.nextReset) : null;
-    const urgColor = daysOut !== null && daysOut <= 3 ? 'var(--red)' : daysOut !== null && daysOut <= 7 ? 'var(--amber)' : 'var(--green)';
+    const urgColor = daysOut !== null && daysOut <= 3 ? 'var(--red)' : daysOut !== null && daysOut <= 7 ? 'var(--amber)' : 'var(--text-muted)';
     const drawsSorted = [...r.draws].sort((a,b) => a.reset_date.localeCompare(b.reset_date));
 
     facHTML += `<tr class="pay-fac-row${isOpen?' pay-fac-active':''}" onclick="togglePayDrill('${r.agreement}')" style="cursor:pointer">
@@ -1405,7 +1413,7 @@ function renderFees() {
     const isOpen = openFeeDates.has(date);
     const daysOut = calcDaysOut(date);
     if (daysOut < 0) return ''; // skip past dates
-    const urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--green)';
+    const urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--text-muted)';
     const feeColor = '#d07070';
 
     return `<div class="pay-date-group">
@@ -1527,7 +1535,7 @@ function renderUpcomingByDate() {
 
   allDates.forEach(function(date, idx) {
     var daysOut = calcDaysOut(date);
-    var urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--green)';
+    var urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--text-muted)';
     var dayLabel = daysOut === 0 ? 'today' : daysOut + 'd away';
     var pRows = payByDate[date] || [];
     var fRows = feeByDate[date] || [];
@@ -1599,7 +1607,7 @@ function syncUpcomingDates() {
 
   function makePlaceholder(date, type) {
     var daysOut = calcDaysOut(date);
-    var urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--green)';
+    var urgColor = daysOut <= 3 ? 'var(--red)' : daysOut <= 7 ? 'var(--amber)' : 'var(--text-muted)';
     var dayLabel = daysOut === 0 ? 'today' : daysOut + 'd away';
     return '<div class="pay-date-group" data-sync-date="' + date + '">' +
       '<div class="pay-date-header open" style="opacity:0.5">' +
